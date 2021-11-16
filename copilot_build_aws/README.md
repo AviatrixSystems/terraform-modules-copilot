@@ -33,11 +33,11 @@ module "copilot_build_aws" {
 }
 
 output "copilot_private_ip" {
-  value = module.copilot_build_aws.aviatrix_copilot_private_ip
+  value = module.copilot_build_aws.private_ip
 }
 
-output "controller_public_ip" {
-  value = module.copilot_build_aws.aviatrix_copilot_public_ip
+output "copilot_public_ip" {
+  value = module.copilot_build_aws.public_ip
 }
 ```
 

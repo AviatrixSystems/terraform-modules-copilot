@@ -4,7 +4,7 @@ This module builds an Aviatrix Copilot in Azure.
 
 ### Usage:
 
-To create an Aviatrix Controller:
+To create an Aviatrix Copilot:
 
 ```
 provider "azurerm" {
@@ -26,12 +26,12 @@ module "copilot_build_azure" {
   incoming_ssl_cidrs = ["<< CIDR_1 allowed for HTTPS access >>", "<< CIDR_2 allowed for HTTPS access >>", ...]
 }
 
-output "avx_copilot_public_ip" {
-  value = module.copilot_build_azure.aviatrix_copilot_public_ip_address
+output "copilot_public_ip" {
+  value = module.copilot_build_azure.public_ip
 }
 
-output "avx_copilot_private_ip" {
-  value = module.copilot_build_azure.aviatrix_copilot_private_ip_address
+output "copilot_private_ip" {
+  value = module.copilot_build_azure.private_ip
 }
 ```
 
