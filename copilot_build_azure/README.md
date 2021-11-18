@@ -24,6 +24,20 @@ module "copilot_build_azure" {
   source             = "git@github.com:AviatrixSystems/terraform-modules-copilot/copilot_build_azure.git"
   copilot_name       = "<< copilot name >>"
   incoming_ssl_cidrs = ["<< CIDR_1 allowed for HTTPS access >>", "<< CIDR_2 allowed for HTTPS access >>", ...]
+  allowed_cidrs = {
+    "tcp_cidrs" = {
+      priority = "100"
+      protocol = "tcp"
+      ports    = ["443"]
+      cidrs    = ["<< CIDR_1 >>", "<< CIDR_2 >>", ...]
+    }
+    "udp_cidrs" = {
+      priority = "200"
+      protocol = "udp"
+      ports    = ["5000", "31283"]
+      cidrs    = ["<< CIDR_1 >>", "<< CIDR_2 >>", ...]
+    }
+  }
 }
 
 output "copilot_public_ip" {
@@ -65,9 +79,9 @@ output "copilot_private_ip" {
 
   Virtual Machine size for the copilot. Default: "Standard_A4_v2".
 
-- **incoming_ssl_cidrs**
+- **allowed_cidrs**
 
-  Incoming CIDRs allowed for HTTPS access.
+  Map of allowed incoming CIDRs. Please set priority(string), protocol(string), ports(set of strings) and cidrs(set of strings) in each map element. Please see the example code above for example.
 
 ### Outputs
 

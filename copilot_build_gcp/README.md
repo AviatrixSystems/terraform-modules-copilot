@@ -20,7 +20,7 @@ terraform {
 }
 
 module "copilot_build_gcp" {
-  source = source = "git@github.com:AviatrixSystems/terraform-modules-copilot/copilot_build_gcp.git"
+  source          = "git@github.com:AviatrixSystems/terraform-modules-copilot/copilot_build_gcp.git"
   copilot_name    = "copilot"
   allowed_cidrs = {
     "tcp" = {
@@ -82,7 +82,7 @@ output "copilot_private_ip" {
 
 - **allowed_cidrs**
 
-  Map of allowed incoming CIDRs. Please see the example code above for example.
+  Map of allowed incoming CIDRs. Please set protocol(string), port(string) and cidrs(set of strings) in each map element. Please see the example code above for example.
 
 ### Outputs
 

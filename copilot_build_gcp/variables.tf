@@ -20,7 +20,7 @@ variable allowed_cidrs {
   type = map(object({
     protocol = string,
     port     = number
-    cidrs    = list(string),
+    cidrs    = set(string),
   }))
 }
 
@@ -37,7 +37,7 @@ variable "service_account_email" {
 }
 
 variable "service_account_scopes" {
-  type = list(string)
+  type = set(string)
   description = "The scopes to assign to the Aviatrix Copilot's Service Account"
   default = ["cloud-platform"]
 }

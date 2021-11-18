@@ -39,7 +39,11 @@ variable "copilot_virtual_machine_size" {
   default     = "Standard_A4_v2"
 }
 
-variable "incoming_ssl_cidrs" {
-  type        = list(string)
-  description = "Incoming CIDRs allowed for HTTPS access."
+variable allowed_cidrs {
+  type = map(object({
+    priority = string,
+    protocol = string,
+    ports    = set(string),
+    cidrs    = set(string),
+  }))
 }

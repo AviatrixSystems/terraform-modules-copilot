@@ -13,8 +13,7 @@ resource "azurerm_resource_group" "aviatrix_copilot_rg" {
 }
 
 resource "azurerm_virtual_network" "aviatrix_copilot_vnet" {
-  address_space = [
-  var.copilot_vnet_cidr]
+  address_space       = [var.copilot_vnet_cidr]
   location            = var.location
   name                = "${var.copilot_name}-vnet"
   resource_group_name = azurerm_resource_group.aviatrix_copilot_rg.name
@@ -24,8 +23,7 @@ resource "azurerm_subnet" "aviatrix_copilot_subnet" {
   name                 = "${var.copilot_name}-subnet"
   resource_group_name  = azurerm_resource_group.aviatrix_copilot_rg.name
   virtual_network_name = azurerm_virtual_network.aviatrix_copilot_vnet.name
-  address_prefixes = [
-  var.copilot_subnet_cidr]
+  address_prefixes     = [var.copilot_subnet_cidr]
 }
 
 resource "azurerm_public_ip" "aviatrix_copilot_public_ip" {
@@ -40,28 +38,19 @@ resource "azurerm_network_security_group" "aviatrix_copilot_nsg" {
   name                = "${var.copilot_name}-security-group"
   resource_group_name = azurerm_resource_group.aviatrix_copilot_rg.name
 
-  security_rule {
-    access                     = "Allow"
-    direction                  = "Inbound"
-    name                       = "https"
-    priority                   = "100"
-    protocol                   = "TCP"
-    source_port_range          = "*"
-    destination_port_range     = "443"
-    source_address_prefixes    = var.incoming_ssl_cidrs
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    access                     = "Allow"
-    direction                  = "Inbound"
-    name                       = "udp"
-    priority                   = "200"
-    protocol                   = "UDP"
-    source_port_range          = "*"
-    destination_port_ranges    = ["5000", "31283"]
-    source_address_prefix      = "0.0.0.0/0"
-    destination_address_prefix = "*"
+  dynamic "security_rule" {
+    for_each = var.allowed_cidrs
+    content {
+      access                     = "Allow"
+      direction                  = "Inbound"
+      name                       = security_rule.key
+      priority                   = security_rule.value["priority"]
+      protocol                   = security_rule.value["protocol"]
+      source_port_range          = "*"
+      destination_port_ranges    = security_rule.value["ports"]
+      source_address_prefixes    = security_rule.value["cidrs"]
+      destination_address_prefix = "*"
+    }
   }
 }
 
@@ -88,10 +77,9 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
   name                            = "${var.copilot_name}-vm"
   disable_password_authentication = false
   location                        = azurerm_resource_group.aviatrix_copilot_rg.location
-  network_interface_ids = [
-  azurerm_network_interface.aviatrix_copilot_nic.id]
-  resource_group_name = azurerm_resource_group.aviatrix_copilot_rg.name
-  size                = var.copilot_virtual_machine_size
+  network_interface_ids           = [azurerm_network_interface.aviatrix_copilot_nic.id]
+  resource_group_name             = azurerm_resource_group.aviatrix_copilot_rg.name
+  size                            = var.copilot_virtual_machine_size
   //disk
   os_disk {
     name                 = "aviatrix-os-disk"

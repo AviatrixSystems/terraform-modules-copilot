@@ -43,7 +43,7 @@ variable allowed_cidrs {
   type = map(object({
     protocol = string,
     port     = number
-    cidrs    = list(string),
+    cidrs    = set(string),
   }))
 }
 
