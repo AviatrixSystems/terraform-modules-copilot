@@ -1,0 +1,10 @@
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+.DS_Store
+setup.tf
+.idea/
+bin
+include
+lib
+venv
