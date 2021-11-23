@@ -46,6 +46,18 @@ value = module.copilot_build_oci.private_ip
 
   Compartment ID.
 
+- **use_existing_vcn**
+
+  Flag to indicate whether to use an existing vcn. Default: false.
+
+- **vcn_id**
+
+  VCN ID. Only required when use_existing_vcn is true. Default: "".
+
+- **subnet_id**
+
+  Subnet ID. Only required when use_existing_vcn is true. Default: "".
+
 - **vcn_cidr_block**
 
   VCN CIDR. Default: "10.1.0.0/16".

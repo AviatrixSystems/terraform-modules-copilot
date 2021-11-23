@@ -2,6 +2,18 @@ variable "tenancy_ocid" {}
 
 variable "compartment_ocid" {}
 
+variable "use_existing_vcn" {
+  default = false
+}
+
+variable "vcn_id" {
+  default = ""
+}
+
+variable "subnet_id" {
+  default = ""
+}
+
 variable "vcn_cidr_block" {
   default = "10.1.0.0/16"
 }

@@ -1,42 +1,36 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 2.0"
-    }
-  }
-}
-
 resource "azurerm_resource_group" "aviatrix_copilot_rg" {
+  count    = var.use_existing_vnet == false ? 1 : 0
   location = var.location
   name     = "${var.copilot_name}-rg"
 }
 
 resource "azurerm_virtual_network" "aviatrix_copilot_vnet" {
-  address_space       = [var.copilot_vnet_cidr]
+  count               = var.use_existing_vnet == false ? 1 : 0
+  address_space       = [var.vnet_cidr]
   location            = var.location
   name                = "${var.copilot_name}-vnet"
-  resource_group_name = azurerm_resource_group.aviatrix_copilot_rg.name
+  resource_group_name = azurerm_resource_group.aviatrix_copilot_rg[0].name
 }
 
 resource "azurerm_subnet" "aviatrix_copilot_subnet" {
+  count                = var.use_existing_vnet == false ? 1 : 0
   name                 = "${var.copilot_name}-subnet"
-  resource_group_name  = azurerm_resource_group.aviatrix_copilot_rg.name
-  virtual_network_name = azurerm_virtual_network.aviatrix_copilot_vnet.name
-  address_prefixes     = [var.copilot_subnet_cidr]
+  resource_group_name  = azurerm_resource_group.aviatrix_copilot_rg[0].name
+  virtual_network_name = azurerm_virtual_network.aviatrix_copilot_vnet[0].name
+  address_prefixes     = [var.subnet_cidr]
 }
 
 resource "azurerm_public_ip" "aviatrix_copilot_public_ip" {
   allocation_method   = "Static"
-  location            = azurerm_resource_group.aviatrix_copilot_rg.location
+  location            = var.location
   name                = "${var.copilot_name}-public-ip"
-  resource_group_name = azurerm_resource_group.aviatrix_copilot_rg.name
+  resource_group_name = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
 }
 
 resource "azurerm_network_security_group" "aviatrix_copilot_nsg" {
-  location            = azurerm_resource_group.aviatrix_copilot_rg.location
+  location            = var.location
   name                = "${var.copilot_name}-security-group"
-  resource_group_name = azurerm_resource_group.aviatrix_copilot_rg.name
+  resource_group_name = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
 
   dynamic "security_rule" {
     for_each = var.allowed_cidrs
@@ -55,13 +49,13 @@ resource "azurerm_network_security_group" "aviatrix_copilot_nsg" {
 }
 
 resource "azurerm_network_interface" "aviatrix_copilot_nic" {
-  location            = azurerm_resource_group.aviatrix_copilot_rg.location
+  location            = var.location
   name                = "${var.copilot_name}-network-interface-card"
-  resource_group_name = azurerm_resource_group.aviatrix_copilot_rg.name
+  resource_group_name = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
   ip_configuration {
     name                          = "${var.copilot_name}-nic"
     private_ip_address_allocation = "Dynamic"
-    subnet_id                     = azurerm_subnet.aviatrix_copilot_subnet.id
+    subnet_id                     = var.use_existing_vnet == false ? azurerm_subnet.aviatrix_copilot_subnet[0].id : var.subnet_id
     public_ip_address_id          = azurerm_public_ip.aviatrix_copilot_public_ip.id
   }
 }
@@ -72,15 +66,15 @@ resource "azurerm_network_interface_security_group_association" "example" {
 }
 
 resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
-  admin_username                  = var.copilot_virtual_machine_admin_username
-  admin_password                  = var.copilot_virtual_machine_admin_password
+  admin_username                  = var.virtual_machine_admin_username
+  admin_password                  = var.virtual_machine_admin_password
   name                            = "${var.copilot_name}-vm"
   disable_password_authentication = false
-  location                        = azurerm_resource_group.aviatrix_copilot_rg.location
+  location                        = var.location
   network_interface_ids           = [azurerm_network_interface.aviatrix_copilot_nic.id]
-  resource_group_name             = azurerm_resource_group.aviatrix_copilot_rg.name
-  size                            = var.copilot_virtual_machine_size
-  //disk
+  resource_group_name             = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
+  size                            = var.virtual_machine_size
+
   os_disk {
     name                 = "aviatrix-os-disk"
     caching              = "ReadWrite"

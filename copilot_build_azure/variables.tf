@@ -9,33 +9,49 @@ variable "copilot_name" {
   description = "Customized Name for Aviatrix Copilot"
 }
 
-variable "copilot_vnet_cidr" {
+variable "vnet_cidr" {
   type        = string
-  description = "CIDR for copilot VNET."
+  description = "CIDR for copilot VNET"
   default     = "10.0.0.0/24"
 }
 
-variable "copilot_subnet_cidr" {
+variable "subnet_cidr" {
   type        = string
-  description = "CIDR for copilot subnet."
+  description = "CIDR for copilot subnet"
   default     = "10.0.0.0/24"
 }
 
-variable "copilot_virtual_machine_admin_username" {
-  type        = string
-  description = "Admin Username for the copilot virtual machine."
-  default     = "aviatrix"
+variable use_existing_vnet {
+  type        = bool
+  description = "If set to true, must provide and subnet_id"
+  default     = false
 }
 
-variable "copilot_virtual_machine_admin_password" {
+variable "resource_group_name" {
   type        = string
-  description = "Admin Password for the copilot virtual machine."
-  default     = "aviatrix1234!"
+  description = "Resource group name, only required when use_existing_vnet is true"
+  default     = ""
 }
 
-variable "copilot_virtual_machine_size" {
+variable "subnet_id" {
   type        = string
-  description = "Virtual Machine size for the copilot."
+  description = "Subnet ID, only required when use_existing_vnet is true"
+  default     = ""
+}
+
+variable "virtual_machine_admin_username" {
+  type        = string
+  description = "Admin Username for the copilot virtual machine"
+}
+
+variable "virtual_machine_admin_password" {
+  type        = string
+  description = "Admin Password for the copilot virtual machine"
+}
+
+variable "virtual_machine_size" {
+  type        = string
+  description = "Virtual Machine size for the copilot"
   default     = "Standard_A4_v2"
 }
 

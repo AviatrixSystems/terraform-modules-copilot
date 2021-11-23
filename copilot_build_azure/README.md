@@ -11,19 +11,11 @@ provider "azurerm" {
   features {}
 }
 
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 2.0"
-    }
-  }
-}
-
 module "copilot_build_azure" {
   source             = "git@github.com:AviatrixSystems/terraform-modules-copilot/copilot_build_azure.git"
   copilot_name       = "<< copilot name >>"
-  incoming_ssl_cidrs = ["<< CIDR_1 allowed for HTTPS access >>", "<< CIDR_2 allowed for HTTPS access >>", ...]
+  virtual_machine_admin_username = "<< username >>"
+  virtual_machine_admin_password = "<< password >>"
   allowed_cidrs = {
     "tcp_cidrs" = {
       priority = "100"
@@ -59,23 +51,35 @@ output "copilot_private_ip" {
   
   Customized Name for Aviatrix Copilot.
 
-- **copilot_vnet_cidr**
+- **vnet_cidr**
   
   CIDR for Copilot VNET. Default: "10.0.0.0/24".
 
-- **copilot_subnet_cidr**
+- **subnet_cidr**
   
   CIDR for copilot subnet. Default: "10.0.0.0/24".
 
-- **copilot_virtual_machine_admin_username**
+- **use_existing_vnet**
 
-  Admin Username for the copilot virtual machine. Default: "aviatrix".
+  Flag to indicate whether to use an existing vnet. Default: false.
 
-- **copilot_virtual_machine_admin_password**
+- **resource_group_name**
 
-  Admin Password for the copilot virtual machine. Default: "aviatrix1234!".
+  Resource group name. Only required when use_existing_vnet is true. Default: "".
 
-- **copilot_virtual_machine_size**
+- **subnet_id**
+
+  Subnet ID. Only required when use_existing_vnet is true. Default: "".
+
+- **virtual_machine_admin_username**
+
+  Admin Username for the copilot virtual machine.
+
+- **virtual_machine_admin_password**
+
+  Admin Password for the copilot virtual machine.
+
+- **virtual_machine_size**
 
   Virtual Machine size for the copilot. Default: "Standard_A4_v2".
 
@@ -85,10 +89,10 @@ output "copilot_private_ip" {
 
 ### Outputs
 
-- **aviatrix_copilot_public_ip**
+- **public_ip**
 
   Copilot public IP.
 
-- **aviatrix_copilot_private_ip**
+- **private_ip**
 
   Copilot private IP.

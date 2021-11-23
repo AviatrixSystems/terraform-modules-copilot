@@ -1,44 +1,50 @@
 resource "aws_vpc" "copilot_vpc" {
-  cidr_block = var.vpc
+  count = var.use_existing_vpc == false ? 1 : 0
+  cidr_block = var.vpc_cidr
   tags = {
     Name = "copilot_vpc"
   }
 }
 
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.copilot_vpc.id
+  count = var.use_existing_vpc == false ? 1 : 0
+  vpc_id = aws_vpc.copilot_vpc[0].id
   tags = {
     Name = "copilot_igw"
   }
 }
 
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.copilot_vpc.id
+  count = var.use_existing_vpc == false ? 1 : 0
+  vpc_id = aws_vpc.copilot_vpc[0].id
   tags = {
     Name = "copilot_rt"
   }
 }
 
 resource "aws_route" "public_internet_gateway" {
-  route_table_id         = aws_route_table.public.id
+  count = var.use_existing_vpc == false ? 1 : 0
+  route_table_id         = aws_route_table.public[0].id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.igw.id
+  gateway_id             = aws_internet_gateway.igw[0].id
   timeouts {
     create = "5m"
   }
 }
 
 resource "aws_subnet" "copilot_subnet" {
-  vpc_id     = aws_vpc.copilot_vpc.id
-  cidr_block = var.subnet
+  count = var.use_existing_vpc == false ? 1 : 0
+  vpc_id     = aws_vpc.copilot_vpc[0].id
+  cidr_block = var.subnet_cidr
   tags = {
     Name = "copilot_subnet"
   }
 }
 
 resource "aws_route_table_association" "rta" {
-  subnet_id      = aws_subnet.copilot_subnet.id
-  route_table_id = aws_route_table.public.id
+  count = var.use_existing_vpc == false ? 1 : 0
+  subnet_id      = aws_subnet.copilot_subnet[0].id
+  route_table_id = aws_route_table.public[0].id
 }
 
 resource "tls_private_key" "key_pair_material" {
@@ -51,10 +57,10 @@ resource "aws_key_pair" "copilot_key_pair" {
   public_key = tls_private_key.key_pair_material.public_key_openssh
 }
 
-resource aws_security_group AviatrixCopilotSecurityGroup {
+resource "aws_security_group" "AviatrixCopilotSecurityGroup" {
   name        = "${local.name_prefix}AviatrixCopilotSecurityGroup"
   description = "Aviatrix - Copilot Security Group"
-  vpc_id      = aws_vpc.copilot_vpc.id
+  vpc_id      = var.use_existing_vpc == false ? aws_vpc.copilot_vpc[0].id : var.vpc_id
 
   dynamic "ingress" {
     for_each = var.allowed_cidrs
@@ -90,27 +96,27 @@ resource aws_security_group AviatrixCopilotSecurityGroup {
 }
 
 resource aws_eip copilot_eip {
-  vpc   = true
-  tags  = local.common_tags
+  vpc  = true
+  tags = local.common_tags
 }
 
-resource aws_eip_association eip_assoc {
+resource "aws_eip_association" "eip_assoc" {
   instance_id   = aws_instance.aviatrixcopilot.id
   allocation_id = aws_eip.copilot_eip.id
 }
 
-resource aws_network_interface eni-copilot {
-  subnet_id       = aws_subnet.copilot_subnet.id
+resource "aws_network_interface" "eni-copilot" {
+  subnet_id       = var.use_existing_vpc == false ? aws_subnet.copilot_subnet[0].id : var.subnet_id
   security_groups = [aws_security_group.AviatrixCopilotSecurityGroup.id]
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}Aviatrix Copilot interface"
   })
 }
 
-resource aws_instance aviatrixcopilot {
-  ami                     = "ami-053cd2dfe7927fe6b"
-  instance_type           = var.instance_type
-  key_name                = var.keypair
+resource "aws_instance" "aviatrixcopilot" {
+  ami           = local.ami_id
+  instance_type = var.instance_type
+  key_name      = var.keypair
 
   network_interface {
     network_interface_id = aws_network_interface.eni-copilot.id

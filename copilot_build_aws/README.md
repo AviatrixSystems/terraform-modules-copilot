@@ -43,11 +43,25 @@ output "copilot_public_ip" {
 
 ### Variables
 
-- **vpc** 
-  VPC in which you want launch Aviatrix Copilot. Default: "10.0.0.0/16"
+- **vpc_cidr** 
 
-- **subnet**
-  Subnet in which you want launch Aviatrix Copilot. Default: "10.0.1.0/24"
+  VPC in which you want launch Aviatrix Copilot. Default: "10.0.0.0/16".
+
+- **subnet_cidr**
+
+  Subnet in which you want launch Aviatrix Copilot. Default: "10.0.1.0/24".
+
+- **use_existing_vpc**
+
+  Flag to indicate whether to use an existing VPC. Default: false.
+
+- **vpc_id**
+
+  VPC ID. Only required when use_existing_vpc is true. Default: "".
+
+- **subnet_id**
+
+  Subnet ID. Only required when use_existing_vpc is true. Default: "".
 
 - **keypair**
 
@@ -87,10 +101,10 @@ output "copilot_public_ip" {
 
 ### Outputs
 
-- **aviatrix_copilot_public_ip**
+- **public_ip**
 
   Copilot public IP.
 
-- **aviatrix_copilot_private_ip**
+- **private_ip**
 
   Copilot private IP.
