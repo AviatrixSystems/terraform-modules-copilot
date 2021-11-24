@@ -4,6 +4,7 @@ data "oci_identity_availability_domain" "ad" {
 }
 
 resource "oci_core_vcn" "copilot_vcn" {
+  count          = var.use_existing_vcn == false ? 1 : 0
   cidr_block     = var.vcn_cidr_block
   compartment_id = var.compartment_ocid
   display_name   = var.vcn_display_name
@@ -11,38 +12,41 @@ resource "oci_core_vcn" "copilot_vcn" {
 }
 
 resource "oci_core_subnet" "copilot_subnet" {
+  count               = var.use_existing_vcn == false ? 1 : 0
   availability_domain = data.oci_identity_availability_domain.ad.name
   cidr_block          = var.subnet_cidr_block
   display_name        = var.subnet_display_name
   dns_label           = var.subnet_dns_label
-  security_list_ids   = [oci_core_vcn.copilot_vcn.default_security_list_id]
+  security_list_ids   = [oci_core_vcn.copilot_vcn[0].default_security_list_id]
   compartment_id      = var.compartment_ocid
-  vcn_id              = oci_core_vcn.copilot_vcn.id
-  route_table_id      = oci_core_route_table.copilot_rt.id
-  dhcp_options_id     = oci_core_vcn.copilot_vcn.default_dhcp_options_id
+  vcn_id              = oci_core_vcn.copilot_vcn[0].id
+  route_table_id      = oci_core_route_table.copilot_rt[0].id
+  dhcp_options_id     = oci_core_vcn.copilot_vcn[0].default_dhcp_options_id
 }
 
 resource "oci_core_internet_gateway" "copilot_igw" {
+  count          = var.use_existing_vcn == false ? 1 : 0
   compartment_id = var.compartment_ocid
   display_name   = var.igw_display_name
-  vcn_id         = oci_core_vcn.copilot_vcn.id
+  vcn_id         = oci_core_vcn.copilot_vcn[0].id
 }
 
 resource "oci_core_route_table" "copilot_rt" {
+  count          = var.use_existing_vcn == false ? 1 : 0
   compartment_id = var.compartment_ocid
-  vcn_id         = oci_core_vcn.copilot_vcn.id
+  vcn_id         = oci_core_vcn.copilot_vcn[0].id
   display_name   = var.routetable_display_name
 
   route_rules {
     destination       = "0.0.0.0/0"
     destination_type  = "CIDR_BLOCK"
-    network_entity_id = oci_core_internet_gateway.copilot_igw.id
+    network_entity_id = oci_core_internet_gateway.copilot_igw[0].id
   }
 }
 
 resource "oci_core_network_security_group" "nsg" {
   compartment_id = var.compartment_ocid
-  vcn_id         = oci_core_vcn.copilot_vcn.id
+  vcn_id         = var.use_existing_vcn == false ? oci_core_vcn.copilot_vcn[0].id : var.vcn_id
   display_name   = var.nsg_display_name
 }
 
@@ -126,7 +130,7 @@ resource "oci_core_instance" "copilot_vm" {
   shape               = var.instance_shape
 
   create_vnic_details {
-    subnet_id        = oci_core_subnet.copilot_subnet.id
+    subnet_id        = var.use_existing_vcn == false ? oci_core_subnet.copilot_subnet[0].id : var.subnet_id
     display_name     = var.vm_display_name
     assign_public_ip = true
     nsg_ids          = [oci_core_network_security_group.nsg.id]

@@ -1,13 +1,31 @@
-variable vpc {
+variable vpc_cidr {
   type        = string
   description = "VPC in which you want launch Aviatrix Copilot"
   default     = "10.0.0.0/16"
 }
 
-variable subnet {
+variable subnet_cidr {
   type        = string
   description = "Subnet in which you want launch Aviatrix Copilot"
   default     = "10.0.1.0/24"
+}
+
+variable use_existing_vpc {
+  type        = bool
+  description = "If set to true, must provide vpc_id and subnet_id"
+  default     = false
+}
+
+variable vpc_id {
+  type        = string
+  description = "VPC ID, required when use_existing_vpc is true"
+  default     = ""
+}
+
+variable subnet_id {
+  type        = string
+  description = "Subnet ID, only required when use_existing_vpc is true"
+  default     = ""
 }
 
 variable keypair {
@@ -22,9 +40,9 @@ variable tags {
 }
 
 variable type {
-  default     = "Copilot"
   type        = string
   description = "Type of billing, can be 'Copilot' or 'CopilotARM'"
+  default     = "Copilot"
 }
 
 variable root_volume_size {
