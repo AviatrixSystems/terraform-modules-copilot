@@ -11,7 +11,7 @@ provider "aws" {
 }
 
 module "copilot_build_aws" {
-  source  = "git@github.com:AviatrixSystems/terraform-modules-copilot/copilot_build_aws.git"
+  source  = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
   keypair = "copilot_kp"
   allowed_cidrs = {
     "tcp_cidrs" = {
@@ -50,6 +50,8 @@ output "copilot_public_ip" {
 - **subnet_cidr**
 
   Subnet in which you want launch Aviatrix Copilot. Default: "10.0.1.0/24".
+
+> **NOTE:** If **use_existing_vpc** is set to true, **vpc_id** and **subnet_id** are required. Make sure that resources `aws_vpc`, `aws_internet_gateway`, `aws_route_table`, `aws_route`, `aws_subnet` and `aws_route_table_association` are configured properly.
 
 - **use_existing_vpc**
 

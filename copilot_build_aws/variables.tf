@@ -12,7 +12,7 @@ variable subnet_cidr {
 
 variable use_existing_vpc {
   type        = bool
-  description = "If set to true, must provide vpc_id and subnet_id"
+  description = "Flag to indicate whether to use an existing VPC"
   default     = false
 }
 
