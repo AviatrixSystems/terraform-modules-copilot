@@ -1,3 +1,9 @@
+variable "use_existing_network" {
+  type = bool
+  description = "Flag to indicate whether to use an existing network"
+  default = false
+}
+
 variable "network" {
   type = string
   description = "The network to attach to the Aviatrix Copilot"

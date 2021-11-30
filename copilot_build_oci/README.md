@@ -11,10 +11,11 @@ provider "oci" {
 }
 
 module "copilot_build_oci" {
-  source           = "git@github.com:AviatrixSystems/terraform-modules-copilot/copilot_build_oci.git"
-  tenancy_ocid     = "<<< tenancy id >>>"
-  compartment_ocid = "<<< compartment id >>>"
-  tcp_allowed_cidrs = ["<< CIDR_1 allowed for HTTPS access >>", "<< CIDR_2 allowed for HTTPS access >>", ...]
+  source                     = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_oci"
+  tenancy_ocid               = "<<< tenancy id >>>"
+  compartment_ocid           = "<<< compartment id >>>"
+  availability_domain_number = "<<< availability domain number >>>"
+  tcp_allowed_cidrs          = ["<< CIDR_1 allowed for HTTPS access >>", "<< CIDR_2 allowed for HTTPS access >>", ...]
   udp_allowed_cidrs = {
     "udp1" = {
       port     = 5000
@@ -46,9 +47,15 @@ value = module.copilot_build_oci.private_ip
 
   Compartment ID.
 
+- **availability_domain_number**
+
+  Availability domain number.
+
+> **NOTE:** If **use_existing_vcn** is set to true, **vcn_id** and **subnet_id** are required. Make sure that resources `oci_core_vcn`, `oci_core_subnet`, `oci_core_internet_gateway` and `oci_core_route_table` are configured properly.
+
 - **use_existing_vcn**
 
-  Flag to indicate whether to use an existing vcn. Default: false.
+  Flag to indicate whether to use an existing VCN. Default: false.
 
 - **vcn_id**
 

@@ -10,18 +10,9 @@ To create an Aviatrix Copilot:
 provider "google" {
 }
 
-terraform {
-  required_providers{
-    google = {
-      source = "hashicorp/google"
-      version = "4.0.0"
-    }
-  }
-}
-
 module "copilot_build_gcp" {
-  source          = "git@github.com:AviatrixSystems/terraform-modules-copilot/copilot_build_gcp.git"
-  copilot_name    = "copilot"
+  source       = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_gcp"
+  copilot_name = "copilot"
   allowed_cidrs = {
     "tcp" = {
       protocol = "tcp"
@@ -51,6 +42,12 @@ output "copilot_private_ip" {
 ```
 
 ### Variables
+
+> **NOTE:** If **use_existing_network** is set to true, **network** and **subnetwork** are required. Make sure that resources `google_compute_network` and `google_compute_subnetwork` are configured properly.
+
+- **use_existing_network**
+
+  Flag to indicate whether to use an existing network. Default: false.
 
 - **network**
 

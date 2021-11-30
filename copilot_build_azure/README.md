@@ -12,8 +12,8 @@ provider "azurerm" {
 }
 
 module "copilot_build_azure" {
-  source             = "git@github.com:AviatrixSystems/terraform-modules-copilot/copilot_build_azure.git"
-  copilot_name       = "<< copilot name >>"
+  source                         = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_azure"
+  copilot_name                   = "<< copilot name >>"
   virtual_machine_admin_username = "<< username >>"
   virtual_machine_admin_password = "<< password >>"
   allowed_cidrs = {
@@ -58,6 +58,8 @@ output "copilot_private_ip" {
 - **subnet_cidr**
   
   CIDR for copilot subnet. Default: "10.0.0.0/24".
+
+> **NOTE:** If **use_existing_vnet** is set to true, **resource_group_name** and **subnet_id** are required. Make sure that resources `azurerm_resource_group`, `azurerm_virtual_network` and `azurerm_subnet` are configured properly.
 
 - **use_existing_vnet**
 

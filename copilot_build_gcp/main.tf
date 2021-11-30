@@ -1,18 +1,18 @@
 resource "google_compute_network" "copilot_network" {
-  count = var.network == "" ? 1 : 0
-  name = "aviatrix-controller-network"
+  count = var.use_existing_network == false ? 1 : 0
+  name = "aviatrix-copilot-network"
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "copilot_subnet" {
-  count = var.network == "" ? 1 : 0
-  name = "aviatrix-controller-subnetwork"
+  count = var.use_existing_network == false ? 1 : 0
+  name = "aviatrix-copilot-subnetwork"
   network = google_compute_network.copilot_network[0].self_link
   ip_cidr_range = var.subnet_cidr
 }
 
 resource "google_compute_address" "ip_address" {
-  name = "aviatrix-controller-address"
+  name = "aviatrix-copilot-address"
   address_type = "EXTERNAL"
 }
 
@@ -32,8 +32,7 @@ resource "google_compute_instance" "copilot" {
   }
 
   network_interface {
-    network = var.network
-    subnetwork = var.network == "" ? google_compute_subnetwork.copilot_subnet[0].self_link : var.subnetwork
+    subnetwork = var.use_existing_network == false ? google_compute_subnetwork.copilot_subnet[0].self_link : var.subnetwork
 
     access_config {
       nat_ip = google_compute_address.ip_address.address
@@ -43,7 +42,7 @@ resource "google_compute_instance" "copilot" {
 
 resource "google_compute_firewall" "copilot_firewall" {
   name = each.key
-  network = var.network == "" ? google_compute_network.copilot_network[0].self_link : var.network
+  network = var.use_existing_network == false ? google_compute_network.copilot_network[0].self_link : var.network
   for_each = var.allowed_cidrs
   source_ranges = each.value["cidrs"]
 
