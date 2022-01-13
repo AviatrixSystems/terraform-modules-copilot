@@ -76,7 +76,7 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
   size                            = var.virtual_machine_size
 
   os_disk {
-    name                 = "aviatrix-os-disk"
+    name                 = var.os_disk_name
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }

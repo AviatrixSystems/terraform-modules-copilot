@@ -63,3 +63,9 @@ variable allowed_cidrs {
     cidrs    = set(string),
   }))
 }
+
+variable "os_disk_name" {
+  type        = string
+  default     = "aviatrix-os-disk"
+  description = "OS disk name of the copilot virtual machine"
+}

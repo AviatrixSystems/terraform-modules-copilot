@@ -89,6 +89,10 @@ output "copilot_private_ip" {
 
   Map of allowed incoming CIDRs. Please set priority(string), protocol(string), ports(set of strings) and cidrs(set of strings) in each map element. Please see the example code above for example.
 
+- **os_disk_name**
+
+  OS disk name of the copilot virtual machine. Default: "aviatrix-os-disk".
+
 ### Outputs
 
 - **public_ip**
