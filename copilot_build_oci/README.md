@@ -15,7 +15,7 @@ module "copilot_build_oci" {
   tenancy_ocid               = "<<< tenancy id >>>"
   compartment_ocid           = "<<< compartment id >>>"
   availability_domain_number = "<<< availability domain number >>>"
-  tcp_allowed_cidrs          = ["<< CIDR_1 allowed for HTTPS access >>", "<< CIDR_2 allowed for HTTPS access >>", ...]
+  https_allowed_cidrs        = ["<< CIDR_1 allowed for HTTPS access >>", "<< CIDR_2 allowed for HTTPS access >>", ...]
   udp_allowed_cidrs = {
     "udp1" = {
       port     = 5000
@@ -101,13 +101,17 @@ value = module.copilot_build_oci.private_ip
 
   Network security group display name. Default: "copilot-nsg".
 
-- **tcp_allowed_cidrs**
+- **https_allowed_cidrs**
 
   Set of CIDRs allowed for HTTPS access.
 
 - **udp_allowed_cidrs**
 
   Map of CIDRs allowed for UDP access. Please set port(number) and cidr(string) in each map element. Please see the example code above for example.
+
+- **ssh_allowed_cidrs**
+
+  Set of CIDRs allowed for SSH access.
 
 - **instance_shape**
 
@@ -116,6 +120,16 @@ value = module.copilot_build_oci.private_ip
 - **vm_display_name**
 
   VM display name. Default: "copilot-vm".
+
+> **NOTE:** If **use_existing_ssh_key** is set to false, new keys will be generated. If **use_existing_keypair** is set to true, **ssh_public_key_file_path** is required.
+
+- **use_existing_ssh_key**
+
+  Flag to indicate whether to use an existing ssh key. Default: false.
+
+- **ssh_public_key_file_path**
+
+  File path to the SSH public key. If not set, defaults to "".
 
 ### Outputs
 

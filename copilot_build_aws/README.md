@@ -65,6 +65,12 @@ output "copilot_public_ip" {
 
   Subnet ID. Only required when use_existing_vpc is true. Default: "".
 
+> **NOTE:** If **use_existing_keypair** is set to false, a key pair with name of **keypair** will be generated. If **use_existing_keypair** is set to true, Copilot will use **keypair** directly.
+
+- **use_existing_keypair**
+
+  Flag to indicate whether to use an existing key pair. Default: false.
+
 - **keypair**
 
   Key pair which should be used by Aviatrix Copilot.

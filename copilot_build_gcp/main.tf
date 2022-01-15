@@ -16,6 +16,12 @@ resource "google_compute_address" "ip_address" {
   address_type = "EXTERNAL"
 }
 
+resource "tls_private_key" "key_pair_material" {
+  count     = var.use_existing_ssh_key == false ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 resource "google_compute_instance" "copilot" {
   name = var.copilot_name
   machine_type = var.copilot_machine_type
@@ -37,6 +43,10 @@ resource "google_compute_instance" "copilot" {
     access_config {
       nat_ip = google_compute_address.ip_address.address
     }
+  }
+
+  metadata = {
+    ssh-keys = local.ssh_key
   }
 }
 
