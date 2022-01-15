@@ -81,6 +81,20 @@ output "copilot_private_ip" {
 
   Map of allowed incoming CIDRs. Please set protocol(string), port(string) and cidrs(set of strings) in each map element. Please see the example code above for example.
 
+> **NOTE:** If **ssh_user** is not set, no SSH key will be added to Copilot. If **use_existing_ssh_key** is set to false, an SSH key will be generated and added to Copilot. If **use_existing_ssh_key** is set to true, **ssh_public_key_file_path** is required.
+
+- **ssh_user**
+
+  SSH user name. If not set, defaults to "".
+
+- **use_existing_ssh_key**
+
+  Flag to indicate whether to use an existing ssh key. Default: false.
+
+- **ssh_public_key_file_path**
+
+  File path to the SSH public key. If not set, defaults to "".
+
 ### Outputs
 
 - **private_ip**

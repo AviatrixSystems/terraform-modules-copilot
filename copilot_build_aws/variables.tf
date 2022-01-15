@@ -28,6 +28,12 @@ variable subnet_id {
   default     = ""
 }
 
+variable use_existing_keypair {
+  type        = bool
+  default     = false
+  description = "Flag to indicate whether to use an existing key pair"
+}
+
 variable keypair {
   type        = string
   description = "Key pair which should be used by Aviatrix Copilot"

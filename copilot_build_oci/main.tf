@@ -58,8 +58,8 @@ resource "oci_core_network_security_group_security_rule" "rule_egress_all" {
   destination = "0.0.0.0/0"
 }
 
-resource "oci_core_network_security_group_security_rule" "rule_ingress_tcp" {
-  for_each = var.tcp_allowed_cidrs
+resource "oci_core_network_security_group_security_rule" "rule_ingress_https" {
+  for_each = var.https_allowed_cidrs
   network_security_group_id = oci_core_network_security_group.nsg.id
   protocol                  = "6"
   direction                 = "INGRESS"
@@ -86,6 +86,22 @@ resource "oci_core_network_security_group_security_rule" "rule_ingress_udp" {
     destination_port_range {
       min = each.value["port"]
       max = each.value["port"]
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "rule_ingress_ssh" {
+  for_each = var.ssh_allowed_cidrs
+  network_security_group_id = oci_core_network_security_group.nsg.id
+  protocol                  = "6"
+  direction                 = "INGRESS"
+  source                    = each.value
+  stateless                 = false
+
+  tcp_options {
+    destination_port_range {
+      min = 22
+      max = 22
     }
   }
 }
@@ -123,11 +139,20 @@ data "oci_core_app_catalog_subscriptions" "test_app_catalog_subscriptions" {
   }
 }
 
+resource "tls_private_key" "key_pair_material" {
+  count     = var.use_existing_ssh_key == false ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 resource "oci_core_instance" "copilot_vm" {
   availability_domain = data.oci_identity_availability_domain.ad.name
   compartment_id      = var.compartment_ocid
   display_name        = var.vm_display_name
   shape               = var.instance_shape
+  metadata            = {
+    ssh_authorized_keys = local.ssh_key
+  }
 
   create_vnic_details {
     subnet_id        = var.use_existing_vcn == false ? oci_core_subnet.copilot_subnet[0].id : var.subnet_id

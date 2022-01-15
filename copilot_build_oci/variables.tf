@@ -85,9 +85,9 @@ variable "nsg_display_name" {
   default = "copilot-nsg"
 }
 
-variable "tcp_allowed_cidrs" {
+variable "https_allowed_cidrs" {
   type = set(string)
-  description = "Allowed CIDRs for TCP access"
+  description = "Allowed CIDRs for HTTPS access"
 }
 
 variable "udp_allowed_cidrs" {
@@ -96,6 +96,11 @@ variable "udp_allowed_cidrs" {
     cidr     = string,
   }))
   description = "Allowed CIDRs for UDP access"
+}
+
+variable "ssh_allowed_cidrs" {
+  type = set(string)
+  description = "Allowed CIDRs for SSH access"
 }
 
 variable "instance_shape" {
@@ -108,4 +113,20 @@ variable "vm_display_name" {
   type = string
   description = "VM display name"
   default = "copilot-vm"
+}
+
+variable "use_existing_ssh_key" {
+  type = bool
+  description = "Flag to indicate whether to use an existing ssh key"
+  default = false
+}
+
+variable "ssh_public_key_file_path" {
+  type = string
+  description = ""
+  default = "File path to the SSH public key"
+}
+
+locals {
+  ssh_key = var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : file(var.ssh_public_key_file_path)
 }

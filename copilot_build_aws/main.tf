@@ -48,12 +48,14 @@ resource "aws_route_table_association" "rta" {
 }
 
 resource "tls_private_key" "key_pair_material" {
+  count     = var.use_existing_keypair == false ? 1 : 0
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
 resource "aws_key_pair" "copilot_key_pair" {
-  key_name = var.keypair
+  count      = var.use_existing_keypair == false ? 1 : 0
+  key_name   = var.keypair
   public_key = tls_private_key.key_pair_material.public_key_openssh
 }
 
