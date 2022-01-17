@@ -56,7 +56,7 @@ resource "tls_private_key" "key_pair_material" {
 resource "aws_key_pair" "copilot_key_pair" {
   count      = var.use_existing_keypair == false ? 1 : 0
   key_name   = var.keypair
-  public_key = tls_private_key.key_pair_material.public_key_openssh
+  public_key = tls_private_key.key_pair_material[0].public_key_openssh
 }
 
 resource "aws_security_group" "AviatrixCopilotSecurityGroup" {
