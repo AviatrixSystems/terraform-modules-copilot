@@ -91,7 +91,7 @@ output "copilot_private_ip" {
 
 - **os_disk_name**
 
-  OS disk name of the copilot virtual machine. Default: "aviatrix-os-disk".
+  OS disk name of the copilot virtual machine. By default, a random name will be generated.
 
 ### Outputs
 
