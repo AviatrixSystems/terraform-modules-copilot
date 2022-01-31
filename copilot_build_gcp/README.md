@@ -95,6 +95,10 @@ output "copilot_private_ip" {
 
   File path to the SSH public key. If not set, defaults to "".
 
+- **additional_disks**
+
+  A set of additional disks' IDs that will be attached to the copilot instance. If not set, defaults to [].
+
 ### Outputs
 
 - **private_ip**

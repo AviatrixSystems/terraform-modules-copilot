@@ -16,6 +16,7 @@ module "copilot_build_oci" {
   compartment_ocid           = "<<< compartment id >>>"
   availability_domain_number = "<<< availability domain number >>>"
   https_allowed_cidrs        = ["<< CIDR_1 allowed for HTTPS access >>", "<< CIDR_2 allowed for HTTPS access >>", ...]
+  
   udp_allowed_cidrs = {
     "udp1" = {
       port     = 5000
@@ -24,6 +25,17 @@ module "copilot_build_oci" {
     "udp2" = {
       port     = 31283
       cidr     = "0.0.0.0/0"
+    }
+  }
+  
+  additional_volumes = {
+    "one" = {
+      attachment_type = "<< attachment type 1 >>"
+      volume_id = "<< volume id 1 >>"
+    }
+    "two" = {
+      attachment_type = "<< attachment type 2 >>"
+      volume_id = "<< volume id 2 >>"
     }
   }
 }
@@ -121,6 +133,10 @@ value = module.copilot_build_oci.private_ip
 
   VM display name. Default: "copilot-vm".
 
+- **copilot_version**
+
+  Copilot version. Default: "1.6.1".
+
 > **NOTE:** If **use_existing_ssh_key** is set to false, new keys will be generated. If **use_existing_keypair** is set to true, **ssh_public_key_file_path** is required.
 
 - **use_existing_ssh_key**
@@ -130,6 +146,12 @@ value = module.copilot_build_oci.private_ip
 - **ssh_public_key_file_path**
 
   File path to the SSH public key. If not set, defaults to "".
+
+> **NOTE:** Please make sure the additional volumes and the copilot vm are in the same availability domain.
+
+- **additional_volumes**
+
+  Map of additional volumes that will be attached to the copilot instance. Please set attachment_type(string) and volume_id(string) in each map element. Please see the example code above for example.
 
 ### Outputs
 

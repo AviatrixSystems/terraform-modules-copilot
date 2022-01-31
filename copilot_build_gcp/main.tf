@@ -48,6 +48,10 @@ resource "google_compute_instance" "copilot" {
   metadata = {
     ssh-keys = local.ssh_key
   }
+
+  lifecycle {
+    ignore_changes = [attached_disk]
+  }
 }
 
 resource "google_compute_firewall" "copilot_firewall" {
@@ -60,4 +64,10 @@ resource "google_compute_firewall" "copilot_firewall" {
     protocol = each.value["protocol"]
     ports = [each.value["port"]]
   }
+}
+
+resource "google_compute_attached_disk" "default" {
+  for_each = var.additional_disks
+  disk     = each.value
+  instance = google_compute_instance.copilot.id
 }

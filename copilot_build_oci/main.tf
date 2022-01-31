@@ -111,8 +111,8 @@ data "oci_core_app_catalog_listing_resource_versions" "test_app_catalog_listing_
 }
 
 resource "oci_core_app_catalog_listing_resource_version_agreement" "test_app_catalog_listing_resource_version_agreement" {
-  listing_id               = data.oci_core_app_catalog_listing_resource_versions.test_app_catalog_listing_resource_versions.app_catalog_listing_resource_versions[0]["listing_id"]
-  listing_resource_version = data.oci_core_app_catalog_listing_resource_versions.test_app_catalog_listing_resource_versions.app_catalog_listing_resource_versions[0]["listing_resource_version"]
+  listing_id               = "ocid1.appcataloglisting.oc1..aaaaaaaabr37btdgmub7gohpxtzle6ff2vhig46tuc7qpsq2bkmlznzbyheq"
+  listing_resource_version = var.copilot_version
 }
 
 resource "oci_core_app_catalog_subscription" "test_app_catalog_subscription" {
@@ -165,4 +165,11 @@ resource "oci_core_instance" "copilot_vm" {
     source_type = "image"
     source_id   = data.oci_core_app_catalog_subscriptions.test_app_catalog_subscriptions.app_catalog_subscriptions[0]["listing_resource_id"]
   }
+}
+
+resource "oci_core_volume_attachment" "test_volume_attachment" {
+  for_each        = var.additional_volumes
+  instance_id     = oci_core_instance.copilot_vm.id
+  attachment_type = each.value.attachment_type
+  volume_id       = each.value.volume_id
 }

@@ -66,7 +66,7 @@ variable root_volume_type {
 variable allowed_cidrs {
   type = map(object({
     protocol = string,
-    port     = number
+    port     = number,
     cidrs    = set(string),
   }))
 }
@@ -87,6 +87,14 @@ variable copilot_name {
   default     = ""
   type        = string
   description = "Name of controller that will be launched"
+}
+
+variable additional_volumes {
+  default = {}
+  type = map(object({
+    device_name = string,
+    volume_id   = string,
+  }))
 }
 
 data aws_region current {}
