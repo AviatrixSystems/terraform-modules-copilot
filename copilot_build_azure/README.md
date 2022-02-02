@@ -16,6 +16,7 @@ module "copilot_build_azure" {
   copilot_name                   = "<< copilot name >>"
   virtual_machine_admin_username = "<< username >>"
   virtual_machine_admin_password = "<< password >>"
+  
   allowed_cidrs = {
     "tcp_cidrs" = {
       priority = "100"
@@ -28,6 +29,17 @@ module "copilot_build_azure" {
       protocol = "udp"
       ports    = ["5000", "31283"]
       cidrs    = ["<< CIDR_1 >>", "<< CIDR_2 >>", ...]
+    }
+  }
+  
+  additional_disks = {
+    "one" = {
+      managed_disk_id = "<< managed disk id 1 >>"
+      lun = "<< logic unit number 1 >>"
+    }
+    "two" = {
+      managed_disk_id = "<< managed disk id 2 >>"
+      lun = "<< logic unit number 2 >>"
     }
   }
 }
@@ -92,6 +104,10 @@ output "copilot_private_ip" {
 - **os_disk_name**
 
   OS disk name of the copilot virtual machine. By default, a random name will be generated.
+
+- **additional_disks**
+
+  Map of additional disks that will be attached to the copilot vm. Please set managed_disk_id(string) and lun(string) in each map element. Please see the example code above for example.
 
 ### Outputs
 

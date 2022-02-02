@@ -13,6 +13,7 @@ provider "aws" {
 module "copilot_build_aws" {
   source  = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
   keypair = "copilot_kp"
+  
   allowed_cidrs = {
     "tcp_cidrs" = {
       protocol = "tcp"
@@ -28,6 +29,17 @@ module "copilot_build_aws" {
       protocol = "udp"
       port     = "31283"
       cidrs    = ["0.0.0.0/0"]
+    }
+  }
+  
+  additional_volumes = {
+    "one" = {
+      device_name = "<< device name 1 >>"
+      volume_id = "<< volume id 1 >>"
+    }
+    "two" = {
+      device_name = "<< device name 2 >>"
+      volume_id = "<< volume id 2 >>"
     }
   }
 }
@@ -106,6 +118,11 @@ output "copilot_public_ip" {
 - **copilot_name**
 
   Name of copilot that will be launched. Default: name_prefix + "AviatrixCopilot".
+
+- **additional_volumes**
+
+  Map of additional volumes that will be attached to the copilot instance. Please set device_name(string) and volume_id(string) in each map element. Please see the example code above for example.
+
 
 ### Outputs
 

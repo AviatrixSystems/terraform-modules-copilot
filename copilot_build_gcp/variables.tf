@@ -72,6 +72,11 @@ variable "ssh_public_key_file_path" {
   default = ""
 }
 
+variable additional_disks {
+  default = []
+  type = set(string)
+}
+
 locals {
   ssh_key = var.ssh_user == "" ? "" : (var.use_existing_ssh_key == false ? "${var.ssh_user}:${tls_private_key.key_pair_material[0].public_key_openssh}" : "${var.ssh_user}:${file(var.ssh_public_key_file_path)}")
 }

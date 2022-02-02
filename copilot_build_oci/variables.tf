@@ -115,6 +115,12 @@ variable "vm_display_name" {
   default = "copilot-vm"
 }
 
+variable "copilot_version" {
+  type = string
+  description = "Copilot version"
+  default = "1.6.1"
+}
+
 variable "use_existing_ssh_key" {
   type = bool
   description = "Flag to indicate whether to use an existing ssh key"
@@ -125,6 +131,14 @@ variable "ssh_public_key_file_path" {
   type = string
   description = ""
   default = "File path to the SSH public key"
+}
+
+variable "additional_volumes" {
+  default = {}
+  type = map(object({
+    attachment_type = string,
+    volume_id = string,
+  }))
 }
 
 locals {

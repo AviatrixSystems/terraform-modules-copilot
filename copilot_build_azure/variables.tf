@@ -69,3 +69,11 @@ variable "os_disk_name" {
   default     = ""
   description = "OS disk name of the copilot virtual machine"
 }
+
+variable additional_disks {
+  default = {}
+  type = map(object({
+    managed_disk_id = string,
+    lun = string,
+  }))
+}

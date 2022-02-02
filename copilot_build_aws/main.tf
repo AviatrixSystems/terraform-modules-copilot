@@ -134,3 +134,10 @@ resource "aws_instance" "aviatrixcopilot" {
     Name = var.copilot_name != "" ? var.copilot_name: "${local.name_prefix}AviatrixCopilot"
   })
 }
+
+resource "aws_volume_attachment" "ebs_att" {
+  for_each    = var.additional_volumes
+  device_name = each.value.device_name
+  volume_id   = each.value.volume_id
+  instance_id = aws_instance.aviatrixcopilot.id
+}

@@ -94,3 +94,11 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
     publisher = "aviatrix-systems"
   }
 }
+
+resource "azurerm_virtual_machine_data_disk_attachment" "example" {
+  for_each    = var.additional_disks
+  managed_disk_id    = each.value.managed_disk_id
+  virtual_machine_id = azurerm_linux_virtual_machine.aviatrix_copilot_vm.id
+  lun                = each.value.lun
+  caching            = "ReadWrite"
+}
