@@ -109,6 +109,17 @@ variable "instance_shape" {
   default = "VM.Standard2.8"
 }
 
+variable boot_volume_size {
+  type        = number
+  description = "Boot volume size for copilot"
+  default     = 50
+
+  validation {
+    condition     = var.boot_volume_size >= 50
+    error_message = "The minimum boot volume size is 50G."
+  }
+}
+
 variable "vm_display_name" {
   type = string
   description = "VM display name"
@@ -129,8 +140,8 @@ variable "use_existing_ssh_key" {
 
 variable "ssh_public_key_file_path" {
   type = string
-  description = ""
-  default = "File path to the SSH public key"
+  description = "File path to the SSH public key"
+  default = ""
 }
 
 variable "additional_volumes" {

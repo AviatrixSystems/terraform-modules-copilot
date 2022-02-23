@@ -36,6 +36,7 @@ resource "aws_subnet" "copilot_subnet" {
   count = var.use_existing_vpc == false ? 1 : 0
   vpc_id     = aws_vpc.copilot_vpc[0].id
   cidr_block = var.subnet_cidr
+  availability_zone = local.default_az
   tags = {
     Name = "copilot_subnet"
   }
@@ -119,6 +120,7 @@ resource "aws_instance" "aviatrixcopilot" {
   ami           = local.ami_id
   instance_type = var.instance_type
   key_name      = var.keypair
+  availability_zone = local.default_az
 
   network_interface {
     network_interface_id = aws_network_interface.eni-copilot.id

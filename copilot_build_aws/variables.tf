@@ -53,13 +53,18 @@ variable type {
 
 variable root_volume_size {
   type        = number
-  description = "Root volume disk size for controller"
-  default     = 2000
+  description = "Root volume size for copilot"
+  default     = 25
+
+  validation {
+    condition     = var.root_volume_size >= 25
+    error_message = "The minimum root volume size is 25G."
+  }
 }
 
 variable root_volume_type {
   type        = string
-  description = "Root volume type for controller"
+  description = "Root volume type for copilot"
   default     = "gp2"
 }
 
@@ -73,7 +78,7 @@ variable allowed_cidrs {
 
 variable instance_type {
   type        = string
-  description = "Controller instance size"
+  description = "Copilot instance size"
   default     = "t3.2xlarge"
 }
 
@@ -86,7 +91,7 @@ variable name_prefix {
 variable copilot_name {
   default     = ""
   type        = string
-  description = "Name of controller that will be launched"
+  description = "Name of copilot that will be launched"
 }
 
 variable additional_volumes {
@@ -106,11 +111,30 @@ data http copilot_iam_id {
   }
 }
 
+data "aws_availability_zones" "all" {}
+
+data "aws_ec2_instance_type_offering" "offering" {
+  for_each = toset(data.aws_availability_zones.all.names)
+
+  filter {
+    name   = "instance-type"
+    values = ["t3.2xlarge"]
+  }
+
+  filter {
+    name   = "location"
+    values = [each.value]
+  }
+
+  location_type = "availability-zone"
+}
+
 locals {
   name_prefix       = var.name_prefix != "" ? "${var.name_prefix}-" : ""
   images_copilot    = jsondecode(data.http.copilot_iam_id.body).Copilot
   images_copilotarm = jsondecode(data.http.copilot_iam_id.body).CopilotARM
   ami_id            = var.type == "Copilot" ? local.images_copilot[data.aws_region.current.name] : local.images_copilotarm[data.aws_region.current.name]
+  default_az        = keys({ for az, details in data.aws_ec2_instance_type_offering.offering : az => details.instance_type if details.instance_type == "t3.2xlarge" })[0]
 
   common_tags = merge(
   var.tags, {

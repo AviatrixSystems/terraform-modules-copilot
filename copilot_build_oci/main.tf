@@ -164,6 +164,7 @@ resource "oci_core_instance" "copilot_vm" {
   source_details {
     source_type = "image"
     source_id   = data.oci_core_app_catalog_subscriptions.test_app_catalog_subscriptions.app_catalog_subscriptions[0]["listing_resource_id"]
+    boot_volume_size_in_gbs = var.boot_volume_size
   }
 }
 

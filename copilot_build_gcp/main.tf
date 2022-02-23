@@ -17,7 +17,7 @@ resource "google_compute_address" "ip_address" {
 }
 
 resource "tls_private_key" "key_pair_material" {
-  count     = var.use_existing_ssh_key == false ? 1 : 0
+  count     = var.ssh_user == "" ? 0 : (var.use_existing_ssh_key == false ? 1 : 0)
   algorithm = "RSA"
   rsa_bits  = 4096
 }
@@ -28,7 +28,8 @@ resource "google_compute_instance" "copilot" {
 
   boot_disk {
     initialize_params {
-      image = "aviatrix-public/avx-copilot-gcp-1-3-1-2020-12-09"
+      image = "aviatrix-public/avx-copilot-gcp-1-6-1-2022-01-27"
+      size  = var.boot_disk_size
     }
   }
 

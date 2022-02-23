@@ -77,6 +77,17 @@ variable additional_disks {
   type = set(string)
 }
 
+variable boot_disk_size {
+  type        = number
+  description = "Boot disk size for copilot"
+  default     = 30
+
+  validation {
+    condition     = var.boot_disk_size >= 30
+    error_message = "The minimum boot disk volume size is 30G."
+  }
+}
+
 locals {
   ssh_key = var.ssh_user == "" ? "" : (var.use_existing_ssh_key == false ? "${var.ssh_user}:${tls_private_key.key_pair_material[0].public_key_openssh}" : "${var.ssh_user}:${file(var.ssh_public_key_file_path)}")
 }

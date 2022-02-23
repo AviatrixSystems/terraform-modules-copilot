@@ -77,6 +77,10 @@ output "copilot_private_ip" {
 
   The machine type to create the Aviatrix Copilot. If not set, defaults to "e2-standard-2".
 
+- **boot_disk_size**
+
+  Boot disk size for copilot. The minimum boot disk size is 30G. Default: 30.
+
 - **allowed_cidrs**
 
   Map of allowed incoming CIDRs. Please set protocol(string), port(string) and cidrs(set of strings) in each map element. Please see the example code above for example.

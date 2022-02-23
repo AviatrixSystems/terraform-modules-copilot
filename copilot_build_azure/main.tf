@@ -65,7 +65,14 @@ resource "azurerm_network_interface_security_group_association" "example" {
   network_security_group_id = azurerm_network_security_group.aviatrix_copilot_nsg.id
 }
 
+resource "tls_private_key" "key_pair_material" {
+  count     = var.add_ssh_key ? (var.use_existing_ssh_key == false ? 1 : 0) : 0
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
+  count = var.add_ssh_key ? 0 : 1
   admin_username                  = var.virtual_machine_admin_username
   admin_password                  = var.virtual_machine_admin_password
   name                            = "${var.copilot_name}-vm"
@@ -79,6 +86,7 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
     name                 = var.os_disk_name
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
+    disk_size_gb         = var.os_disk_size
   }
 
   source_image_reference {
@@ -95,10 +103,47 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
   }
 }
 
+resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm_ssh" {
+  count = var.add_ssh_key ? 1 : 0
+  admin_username                  = var.virtual_machine_admin_username
+  admin_password                  = var.virtual_machine_admin_password
+  name                            = "${var.copilot_name}-vm"
+  disable_password_authentication = false
+  location                        = var.location
+  network_interface_ids           = [azurerm_network_interface.aviatrix_copilot_nic.id]
+  resource_group_name             = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
+  size                            = var.virtual_machine_size
+
+  os_disk {
+    name                 = var.os_disk_name
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+    disk_size_gb         = var.os_disk_size
+  }
+
+  source_image_reference {
+    offer     = "aviatrix-copilot"
+    publisher = "aviatrix-systems"
+    sku       = "avx-cplt-byol-01"
+    version   = "latest"
+  }
+
+  plan {
+    name      = "avx-cplt-byol-01"
+    product   = "aviatrix-copilot"
+    publisher = "aviatrix-systems"
+  }
+
+  admin_ssh_key {
+    username   = var.virtual_machine_admin_username
+    public_key = local.ssh_key
+  }
+}
+
 resource "azurerm_virtual_machine_data_disk_attachment" "example" {
   for_each    = var.additional_disks
   managed_disk_id    = each.value.managed_disk_id
-  virtual_machine_id = azurerm_linux_virtual_machine.aviatrix_copilot_vm.id
+  virtual_machine_id = var.add_ssh_key ? azurerm_linux_virtual_machine.aviatrix_copilot_vm_ssh[0].id : azurerm_linux_virtual_machine.aviatrix_copilot_vm[0].id
   lun                = each.value.lun
   caching            = "ReadWrite"
 }
