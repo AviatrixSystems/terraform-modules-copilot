@@ -1,3 +1,8 @@
+output "ec2-info" {
+  value       = aws_instance.aviatrixcopilot.*
+  description = "EC2 instance info"
+}
+
 output "private_ip" {
   value       = aws_instance.aviatrixcopilot.*.private_ip
   description = "Private IP address of the Aviatrix Copilot"
