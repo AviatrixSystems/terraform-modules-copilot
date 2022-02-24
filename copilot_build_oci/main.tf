@@ -52,14 +52,13 @@ resource "oci_core_network_security_group" "nsg" {
 
 resource "oci_core_network_security_group_security_rule" "rule_egress_all" {
   network_security_group_id = oci_core_network_security_group.nsg.id
-
-  direction   = "EGRESS"
-  protocol    = "all"
-  destination = "0.0.0.0/0"
+  direction                 = "EGRESS"
+  protocol                  = "all"
+  destination               = "0.0.0.0/0"
 }
 
 resource "oci_core_network_security_group_security_rule" "rule_ingress_https" {
-  for_each = var.https_allowed_cidrs
+  for_each                  = var.https_allowed_cidrs
   network_security_group_id = oci_core_network_security_group.nsg.id
   protocol                  = "6"
   direction                 = "INGRESS"
@@ -75,7 +74,7 @@ resource "oci_core_network_security_group_security_rule" "rule_ingress_https" {
 }
 
 resource "oci_core_network_security_group_security_rule" "rule_ingress_udp" {
-  for_each = var.udp_allowed_cidrs
+  for_each                  = var.udp_allowed_cidrs
   network_security_group_id = oci_core_network_security_group.nsg.id
   protocol                  = "17"
   direction                 = "INGRESS"
@@ -91,7 +90,7 @@ resource "oci_core_network_security_group_security_rule" "rule_ingress_udp" {
 }
 
 resource "oci_core_network_security_group_security_rule" "rule_ingress_ssh" {
-  for_each = var.ssh_allowed_cidrs
+  for_each                  = var.ssh_allowed_cidrs
   network_security_group_id = oci_core_network_security_group.nsg.id
   protocol                  = "6"
   direction                 = "INGRESS"
@@ -131,7 +130,7 @@ resource "oci_core_app_catalog_subscription" "test_app_catalog_subscription" {
 
 data "oci_core_app_catalog_subscriptions" "test_app_catalog_subscriptions" {
   compartment_id = var.compartment_ocid
-  listing_id = oci_core_app_catalog_subscription.test_app_catalog_subscription.listing_id
+  listing_id     = oci_core_app_catalog_subscription.test_app_catalog_subscription.listing_id
 
   filter {
     name   = "listing_resource_version"
@@ -150,7 +149,7 @@ resource "oci_core_instance" "copilot_vm" {
   compartment_id      = var.compartment_ocid
   display_name        = var.vm_display_name
   shape               = var.instance_shape
-  metadata            = {
+  metadata = {
     ssh_authorized_keys = local.ssh_key
   }
 
@@ -162,8 +161,8 @@ resource "oci_core_instance" "copilot_vm" {
   }
 
   source_details {
-    source_type = "image"
-    source_id   = data.oci_core_app_catalog_subscriptions.test_app_catalog_subscriptions.app_catalog_subscriptions[0]["listing_resource_id"]
+    source_type             = "image"
+    source_id               = data.oci_core_app_catalog_subscriptions.test_app_catalog_subscriptions.app_catalog_subscriptions[0]["listing_resource_id"]
     boot_volume_size_in_gbs = var.boot_volume_size
   }
 }

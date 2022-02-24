@@ -1,115 +1,115 @@
 variable "tenancy_ocid" {
-  type = string
+  type        = string
   description = "Tenancy OCID"
 }
 
 variable "compartment_ocid" {
-  type = string
+  type        = string
   description = "Compartment OCID"
 }
 
 variable "availability_domain_number" {
-  type = number
+  type        = number
   description = "Availability domain number"
 }
 
 variable "use_existing_vcn" {
-  type = bool
+  type        = bool
   description = "Flag to indicate whether to use an existing VCN"
-  default = false
+  default     = false
 }
 
 variable "vcn_id" {
-  type = string
+  type        = string
   description = "VCN ID"
-  default = ""
+  default     = ""
 }
 
 variable "subnet_id" {
-  type = string
+  type        = string
   description = "Subnet ID"
-  default = ""
+  default     = ""
 }
 
 variable "vcn_cidr_block" {
-  type = string
+  type        = string
   description = "VCN CIDR"
-  default = "10.1.0.0/16"
+  default     = "10.1.0.0/16"
 }
 
 variable "vcn_display_name" {
-  type = string
+  type        = string
   description = "VCN display name"
-  default = "copilot-vcn"
+  default     = "copilot-vcn"
 }
 
 variable "vcn_dns_label" {
-  type = string
+  type        = string
   description = "VCN DNS label"
-  default = "aviatrix"
+  default     = "aviatrix"
 }
 
 variable "subnet_cidr_block" {
-  type = string
+  type        = string
   description = "Subnet CIDR"
-  default = "10.1.20.0/24"
+  default     = "10.1.20.0/24"
 }
 
 variable "subnet_display_name" {
-  type = string
+  type        = string
   description = "Subnet display name"
-  default = "copilot-subnet"
+  default     = "copilot-subnet"
 }
 
 variable "subnet_dns_label" {
-  type = string
+  type        = string
   description = "Subnet DNS label"
-  default = "management"
+  default     = "management"
 }
 
 variable "igw_display_name" {
-  type = string
+  type        = string
   description = "IGW display name"
-  default = "copilot-igw"
+  default     = "copilot-igw"
 }
 
 variable "routetable_display_name" {
-  type = string
+  type        = string
   description = "Route table display name"
-  default = "copilot-rt"
+  default     = "copilot-rt"
 }
 
 variable "nsg_display_name" {
-  type = string
+  type        = string
   description = "NSG display name"
-  default = "copilot-nsg"
+  default     = "copilot-nsg"
 }
 
 variable "https_allowed_cidrs" {
-  type = set(string)
+  type        = set(string)
   description = "Allowed CIDRs for HTTPS access"
 }
 
 variable "udp_allowed_cidrs" {
   type = map(object({
-    port     = number
-    cidr     = string,
+    port = number
+    cidr = string,
   }))
   description = "Allowed CIDRs for UDP access"
 }
 
 variable "ssh_allowed_cidrs" {
-  type = set(string)
+  type        = set(string)
   description = "Allowed CIDRs for SSH access"
 }
 
 variable "instance_shape" {
-  type = string
+  type        = string
   description = "Instance shape"
-  default = "VM.Standard2.8"
+  default     = "VM.Standard2.8"
 }
 
-variable boot_volume_size {
+variable "boot_volume_size" {
   type        = number
   description = "Boot volume size for copilot"
   default     = 50
@@ -121,34 +121,34 @@ variable boot_volume_size {
 }
 
 variable "vm_display_name" {
-  type = string
+  type        = string
   description = "VM display name"
-  default = "copilot-vm"
+  default     = "copilot-vm"
 }
 
 variable "copilot_version" {
-  type = string
+  type        = string
   description = "Copilot version"
-  default = "1.6.1"
+  default     = "1.6.1"
 }
 
 variable "use_existing_ssh_key" {
-  type = bool
+  type        = bool
   description = "Flag to indicate whether to use an existing ssh key"
-  default = false
+  default     = false
 }
 
 variable "ssh_public_key_file_path" {
-  type = string
+  type        = string
   description = "File path to the SSH public key"
-  default = ""
+  default     = ""
 }
 
 variable "additional_volumes" {
   default = {}
   type = map(object({
     attachment_type = string,
-    volume_id = string,
+    volume_id       = string,
   }))
 }
 

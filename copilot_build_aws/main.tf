@@ -1,5 +1,5 @@
 resource "aws_vpc" "copilot_vpc" {
-  count = var.use_existing_vpc == false ? 1 : 0
+  count      = var.use_existing_vpc == false ? 1 : 0
   cidr_block = var.vpc_cidr
   tags = {
     Name = "copilot_vpc"
@@ -7,7 +7,7 @@ resource "aws_vpc" "copilot_vpc" {
 }
 
 resource "aws_internet_gateway" "igw" {
-  count = var.use_existing_vpc == false ? 1 : 0
+  count  = var.use_existing_vpc == false ? 1 : 0
   vpc_id = aws_vpc.copilot_vpc[0].id
   tags = {
     Name = "copilot_igw"
@@ -15,7 +15,7 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_route_table" "public" {
-  count = var.use_existing_vpc == false ? 1 : 0
+  count  = var.use_existing_vpc == false ? 1 : 0
   vpc_id = aws_vpc.copilot_vpc[0].id
   tags = {
     Name = "copilot_rt"
@@ -23,7 +23,7 @@ resource "aws_route_table" "public" {
 }
 
 resource "aws_route" "public_internet_gateway" {
-  count = var.use_existing_vpc == false ? 1 : 0
+  count                  = var.use_existing_vpc == false ? 1 : 0
   route_table_id         = aws_route_table.public[0].id
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = aws_internet_gateway.igw[0].id
@@ -33,9 +33,9 @@ resource "aws_route" "public_internet_gateway" {
 }
 
 resource "aws_subnet" "copilot_subnet" {
-  count = var.use_existing_vpc == false ? 1 : 0
-  vpc_id     = aws_vpc.copilot_vpc[0].id
-  cidr_block = var.subnet_cidr
+  count             = var.use_existing_vpc == false ? 1 : 0
+  vpc_id            = aws_vpc.copilot_vpc[0].id
+  cidr_block        = var.subnet_cidr
   availability_zone = local.default_az
   tags = {
     Name = "copilot_subnet"
@@ -43,7 +43,7 @@ resource "aws_subnet" "copilot_subnet" {
 }
 
 resource "aws_route_table_association" "rta" {
-  count = var.use_existing_vpc == false ? 1 : 0
+  count          = var.use_existing_vpc == false ? 1 : 0
   subnet_id      = aws_subnet.copilot_subnet[0].id
   route_table_id = aws_route_table.public[0].id
 }
@@ -98,7 +98,7 @@ resource "aws_security_group" "AviatrixCopilotSecurityGroup" {
   })
 }
 
-resource aws_eip copilot_eip {
+resource "aws_eip" "copilot_eip" {
   vpc  = true
   tags = local.common_tags
 }
@@ -117,9 +117,9 @@ resource "aws_network_interface" "eni-copilot" {
 }
 
 resource "aws_instance" "aviatrixcopilot" {
-  ami           = local.ami_id
-  instance_type = var.instance_type
-  key_name      = var.keypair
+  ami               = local.ami_id
+  instance_type     = var.instance_type
+  key_name          = var.keypair
   availability_zone = local.default_az
 
   network_interface {
@@ -133,7 +133,7 @@ resource "aws_instance" "aviatrixcopilot" {
   }
 
   tags = merge(local.common_tags, {
-    Name = var.copilot_name != "" ? var.copilot_name: "${local.name_prefix}AviatrixCopilot"
+    Name = var.copilot_name != "" ? var.copilot_name : "${local.name_prefix}AviatrixCopilot"
   })
 }
 

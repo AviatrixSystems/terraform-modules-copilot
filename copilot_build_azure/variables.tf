@@ -21,7 +21,7 @@ variable "subnet_cidr" {
   default     = "10.0.0.0/24"
 }
 
-variable use_existing_vnet {
+variable "use_existing_vnet" {
   type        = bool
   description = "Flag to indicate whether to use an existing VNET"
   default     = false
@@ -56,24 +56,24 @@ variable "virtual_machine_size" {
 }
 
 variable "add_ssh_key" {
-  type = bool
+  type        = bool
   description = "Flag to indicate whether to add an SSH key"
-  default = false
+  default     = false
 }
 
 variable "use_existing_ssh_key" {
-  type = bool
+  type        = bool
   description = "Flag to indicate whether to use an existing SSH key"
-  default = false
+  default     = false
 }
 
 variable "ssh_public_key_file_path" {
-  type = string
+  type        = string
   description = "File path to the SSH public key"
-  default = ""
+  default     = ""
 }
 
-variable allowed_cidrs {
+variable "allowed_cidrs" {
   type = map(object({
     priority = string,
     protocol = string,
@@ -88,7 +88,7 @@ variable "os_disk_name" {
   description = "OS disk name of the copilot virtual machine"
 }
 
-variable os_disk_size {
+variable "os_disk_size" {
   type        = number
   description = "OS disk size for copilot"
   default     = 30
@@ -99,11 +99,11 @@ variable os_disk_size {
   }
 }
 
-variable additional_disks {
+variable "additional_disks" {
   default = {}
   type = map(object({
     managed_disk_id = string,
-    lun = string,
+    lun             = string,
   }))
 }
 

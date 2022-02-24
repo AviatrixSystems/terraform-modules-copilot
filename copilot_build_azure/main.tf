@@ -72,7 +72,7 @@ resource "tls_private_key" "key_pair_material" {
 }
 
 resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
-  count = var.add_ssh_key ? 0 : 1
+  count                           = var.add_ssh_key ? 0 : 1
   admin_username                  = var.virtual_machine_admin_username
   admin_password                  = var.virtual_machine_admin_password
   name                            = "${var.copilot_name}-vm"
@@ -104,7 +104,7 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
 }
 
 resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm_ssh" {
-  count = var.add_ssh_key ? 1 : 0
+  count                           = var.add_ssh_key ? 1 : 0
   admin_username                  = var.virtual_machine_admin_username
   admin_password                  = var.virtual_machine_admin_password
   name                            = "${var.copilot_name}-vm"
@@ -141,7 +141,7 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm_ssh" {
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "example" {
-  for_each    = var.additional_disks
+  for_each           = var.additional_disks
   managed_disk_id    = each.value.managed_disk_id
   virtual_machine_id = var.add_ssh_key ? azurerm_linux_virtual_machine.aviatrix_copilot_vm_ssh[0].id : azurerm_linux_virtual_machine.aviatrix_copilot_vm[0].id
   lun                = each.value.lun
