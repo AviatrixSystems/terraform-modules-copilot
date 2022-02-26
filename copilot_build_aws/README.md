@@ -97,11 +97,11 @@ output "copilot_public_ip" {
 
 - **root_volume_size**
 
-  Root volume disk size for controller. Default: 2000.
+  Root volume size for copilot. The minimum root volume size is 25G. Default: 25.
 
 - **root_volume_type**
 
-  Root volume type for controller. Default: "gp2".
+  Root volume type for copilot. Default: "gp2".
 
 - **allowed_cidrs**
 
@@ -109,7 +109,7 @@ output "copilot_public_ip" {
 
 - **instance_type**
 
-  Controller instance size. Default: "t3.2xlarge".
+  Copilot instance size. Default: "t3.2xlarge".
 
 - **name_prefix**
 
