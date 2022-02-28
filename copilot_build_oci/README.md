@@ -129,6 +129,10 @@ value = module.copilot_build_oci.private_ip
 
   Instance shape. Default: "VM.Standard2.8".
 
+- **boot_volume_size**
+
+  Boot volume size for copilot. The minimum boot volume size is 50G. Default: 50.
+
 - **vm_display_name**
 
   VM display name. Default: "copilot-vm".

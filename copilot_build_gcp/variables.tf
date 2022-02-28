@@ -1,28 +1,28 @@
 variable "use_existing_network" {
-  type = bool
+  type        = bool
   description = "Flag to indicate whether to use an existing network"
-  default = false
+  default     = false
 }
 
 variable "network" {
-  type = string
+  type        = string
   description = "The network to attach to the Aviatrix Copilot"
-  default = ""
+  default     = ""
 }
 
 variable "subnetwork" {
-  type = string
+  type        = string
   description = "The subnetwork to attach the Aviatrix Copilot"
-  default = ""
+  default     = ""
 }
 
 variable "subnet_cidr" {
-  type = string
+  type        = string
   description = "The cidr for the subnetwork this module will create or an existing subnet"
-  default = "10.128.0.0/9"
+  default     = "10.128.0.0/9"
 }
 
-variable allowed_cidrs {
+variable "allowed_cidrs" {
   type = map(object({
     protocol = string,
     port     = number
@@ -31,50 +31,62 @@ variable allowed_cidrs {
 }
 
 variable "copilot_name" {
-  type = string
+  type        = string
   description = "The Aviatrix Copilot name"
-  default = "aviatrix-copilot"
+  default     = "aviatrix-copilot"
 }
 
 variable "service_account_email" {
-  type = string
+  type        = string
   description = "The Service Account to assign to the Aviatrix Copilot"
-  default = ""
+  default     = ""
 }
 
 variable "service_account_scopes" {
-  type = set(string)
+  type        = set(string)
   description = "The scopes to assign to the Aviatrix Copilot's Service Account"
-  default = ["cloud-platform"]
+  default     = ["cloud-platform"]
 }
 
 variable "copilot_machine_type" {
-  type = string
+  type        = string
   description = "The machine type to create the Aviatrix Copilot"
-  default = "e2-standard-2"
+  default     = "e2-standard-2"
 }
 
 variable "ssh_user" {
-  type = string
+  type        = string
   description = "SSH user name"
-  default = ""
+  default     = ""
 }
 
 variable "use_existing_ssh_key" {
-  type = bool
+  type        = bool
   description = "Flag to indicate whether to use an existing ssh key"
-  default = false
+  default     = false
 }
 
 variable "ssh_public_key_file_path" {
-  type = string
+  type        = string
   description = "File path to the SSH public key"
-  default = ""
+  default     = ""
 }
 
-variable additional_disks {
+variable "additional_disks" {
+  type    = set(string)
   default = []
-  type = set(string)
+
+}
+
+variable "boot_disk_size" {
+  type        = number
+  description = "Boot disk size for copilot"
+  default     = 30
+
+  validation {
+    condition     = var.boot_disk_size >= 30
+    error_message = "The minimum boot disk volume size is 30G."
+  }
 }
 
 locals {

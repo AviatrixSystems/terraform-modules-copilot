@@ -105,6 +105,24 @@ output "copilot_private_ip" {
 
   OS disk name of the copilot virtual machine. By default, a random name will be generated.
 
+- **os_disk_size**
+
+  OS disk size for the copilot virtual machine. The minimum size is 30G. Default: 30.
+
+> **NOTE:** If **add_ssh_key** is not set, no SSH key will be added to Copilot. If **use_existing_ssh_key** is set to false, an SSH key will be generated and added to Copilot. If **use_existing_ssh_key** is set to true, **ssh_public_key_file_path** is required.
+
+- **add_ssh_key**
+
+  Flag to indicate whether to add an SSH key. Default: false.
+
+- **use_existing_ssh_key**
+
+  Flag to indicate whether to use an existing ssh key. Default: false.
+
+- **ssh_public_key_file_path**
+
+  File path to the SSH public key. If not set, defaults to "".
+- 
 - **additional_disks**
 
   Map of additional disks that will be attached to the copilot vm. Please set managed_disk_id(string) and lun(string) in each map element. Please see the example code above for example.
