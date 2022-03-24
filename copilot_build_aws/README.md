@@ -119,6 +119,14 @@ output "copilot_public_ip" {
 
   Name of copilot that will be launched. Default: name_prefix + "AviatrixCopilot".
 
+- **default_data_volume_name**
+
+  Name of default data volume. If not set, no default data volume will be created. Default: "".
+
+- **default_data_volume_size**
+
+  Size of default data volume. Default: 50.
+
 - **additional_volumes**
 
   Map of additional volumes that will be attached to the copilot instance. Please set device_name(string) and volume_id(string) in each map element. Please see the example code above for example.

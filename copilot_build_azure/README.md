@@ -122,7 +122,11 @@ output "copilot_private_ip" {
 - **ssh_public_key_file_path**
 
   File path to the SSH public key. If not set, defaults to "".
-- 
+
+- **default_data_disk_size**
+
+  Size of default data disk. If not set, no default data disk will be created. Default: 0.
+
 - **additional_disks**
 
   Map of additional disks that will be attached to the copilot vm. Please set managed_disk_id(string) and lun(string) in each map element. Please see the example code above for example.

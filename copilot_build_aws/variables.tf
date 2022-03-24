@@ -94,6 +94,18 @@ variable "copilot_name" {
   description = "Name of copilot that will be launched"
 }
 
+variable "default_data_volume_name" {
+  default     = ""
+  type        = string
+  description = "Name of default data volume. If not set, no default data volume will be created"
+}
+
+variable "default_data_volume_size" {
+  default     = 50
+  type        = number
+  description = "Size of default data volume"
+}
+
 variable "additional_volumes" {
   default = {}
   type = map(object({

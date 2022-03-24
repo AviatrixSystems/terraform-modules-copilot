@@ -137,6 +137,19 @@ resource "aws_instance" "aviatrixcopilot" {
   })
 }
 
+resource "aws_ebs_volume" "default" {
+  count             = var.default_data_volume_name == "" ? 0 : 1
+  availability_zone = local.default_az
+  size              = var.default_data_volume_size
+}
+
+resource "aws_volume_attachment" "default" {
+  count       = var.default_data_volume_name == "" ? 0 : 1
+  device_name = var.default_data_volume_name
+  volume_id   = aws_ebs_volume.default[0].id
+  instance_id = aws_instance.aviatrixcopilot.id
+}
+
 resource "aws_volume_attachment" "ebs_att" {
   for_each    = var.additional_volumes
   device_name = each.value.device_name
