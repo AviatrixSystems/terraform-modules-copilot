@@ -99,6 +99,10 @@ output "copilot_private_ip" {
 
   File path to the SSH public key. If not set, defaults to "".
 
+- **default_data_disk_size**
+
+  Size of default data disk. If not set, no default data disk will be created. Default: 0.
+
 - **additional_disks**
 
   A set of additional disks' IDs that will be attached to the copilot instance. If not set, defaults to [].

@@ -72,6 +72,12 @@ variable "ssh_public_key_file_path" {
   default     = ""
 }
 
+variable "default_data_disk_size" {
+  default     = 0
+  type        = number
+  description = "Size of default data disk. If not set, no default data disk will be created."
+}
+
 variable "additional_disks" {
   type    = set(string)
   default = []

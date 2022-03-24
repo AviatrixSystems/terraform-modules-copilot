@@ -153,6 +153,10 @@ value = module.copilot_build_oci.private_ip
 
 > **NOTE:** Please make sure the additional volumes and the copilot vm are in the same availability domain.
 
+- **default_data_volume_size**
+
+  Size of default data volume. If not set, no default data volume will be created. Default: 0.
+
 - **additional_volumes**
 
   Map of additional volumes that will be attached to the copilot instance. Please set attachment_type(string) and volume_id(string) in each map element. Please see the example code above for example.

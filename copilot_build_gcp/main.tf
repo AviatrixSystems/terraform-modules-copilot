@@ -67,7 +67,19 @@ resource "google_compute_firewall" "copilot_firewall" {
   }
 }
 
+resource "google_compute_disk" "default" {
+  count = var.default_data_disk_size == 0 ? 0 : 1
+  name  = "default-data-disk"
+  size  = var.default_data_disk_size
+}
+
 resource "google_compute_attached_disk" "default" {
+  count    = var.default_data_disk_size == 0 ? 0 : 1
+  disk     = google_compute_disk.default[0].id
+  instance = google_compute_instance.copilot.id
+}
+
+resource "google_compute_attached_disk" "disk_att" {
   for_each = var.additional_disks
   disk     = each.value
   instance = google_compute_instance.copilot.id

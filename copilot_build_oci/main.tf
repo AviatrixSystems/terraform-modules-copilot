@@ -167,6 +167,20 @@ resource "oci_core_instance" "copilot_vm" {
   }
 }
 
+resource "oci_core_volume" "default" {
+  count               = var.default_data_volume_size == 0 ? 0 : 1
+  compartment_id      = var.compartment_ocid
+  availability_domain = data.oci_identity_availability_domain.ad.name
+  size_in_gbs         = var.default_data_volume_size
+}
+
+resource "oci_core_volume_attachment" "default" {
+  count           = var.default_data_volume_size == 0 ? 0 : 1
+  attachment_type = "paravirtualized"
+  instance_id     = oci_core_instance.copilot_vm.id
+  volume_id       = oci_core_volume.default[0].id
+}
+
 resource "oci_core_volume_attachment" "test_volume_attachment" {
   for_each        = var.additional_volumes
   instance_id     = oci_core_instance.copilot_vm.id
