@@ -134,6 +134,18 @@ output "copilot_public_ip" {
 
 ### Outputs
 
+- **region**
+
+  Current AWS region.
+
+- **vpc_id**
+
+  VPC ID.
+
+- **vpc_name**
+
+  VPC name.
+
 - **public_ip**
 
   Copilot public IP.
