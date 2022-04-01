@@ -118,7 +118,7 @@ resource "aws_network_interface" "eni-copilot" {
 
 resource "aws_instance" "aviatrixcopilot" {
   ami               = local.ami_id
-  instance_type     = var.instance_type
+  instance_type     = local.instance_type
   key_name          = var.keypair
   availability_zone = local.default_az
 

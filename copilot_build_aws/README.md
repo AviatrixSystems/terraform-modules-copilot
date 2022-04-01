@@ -55,6 +55,10 @@ output "copilot_public_ip" {
 
 ### Variables
 
+- **availability_zone**
+
+  Availability zone for subnet, instance and default data volume. If not set, an availability zone that supports the instance type will be used.
+
 - **vpc_cidr** 
 
   VPC in which you want launch Aviatrix Copilot. Default: "10.0.0.0/16".
@@ -109,7 +113,7 @@ output "copilot_public_ip" {
 
 - **instance_type**
 
-  Copilot instance size. Default: "t3.2xlarge".
+  Copilot instance size. Default: "m5.2xlarge" for Copilot and "t4g.2xlarge" for CopilotARM.
 
 - **name_prefix**
 
