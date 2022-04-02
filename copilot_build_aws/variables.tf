@@ -1,3 +1,9 @@
+variable "availability_zone" {
+  type        = string
+  description = "Availability zone"
+  default     = ""
+}
+
 variable "vpc_cidr" {
   type        = string
   description = "VPC in which you want launch Aviatrix Copilot"
@@ -79,7 +85,7 @@ variable "allowed_cidrs" {
 variable "instance_type" {
   type        = string
   description = "Copilot instance size"
-  default     = "t3.2xlarge"
+  default     = ""
 }
 
 variable "name_prefix" {
@@ -130,7 +136,7 @@ data "aws_ec2_instance_type_offering" "offering" {
 
   filter {
     name   = "instance-type"
-    values = ["t3.2xlarge"]
+    values = [local.instance_type]
   }
 
   filter {
@@ -146,7 +152,9 @@ locals {
   images_copilot    = jsondecode(data.http.copilot_iam_id.body).Copilot
   images_copilotarm = jsondecode(data.http.copilot_iam_id.body).CopilotARM
   ami_id            = var.type == "Copilot" ? local.images_copilot[data.aws_region.current.name] : local.images_copilotarm[data.aws_region.current.name]
-  default_az        = keys({ for az, details in data.aws_ec2_instance_type_offering.offering : az => details.instance_type if details.instance_type == "t3.2xlarge" })[0]
+  instance_type     = var.instance_type != "" ? var.instance_type : (var.type == "Copilot" ? "m5.2xlarge" : "t4g.2xlarge")
+  default_az        = keys({ for az, details in data.aws_ec2_instance_type_offering.offering : az => details.instance_type if details.instance_type == local.instance_type })[0]
+  availability_zone = var.availability_zone != "" ? var.availability_zone : local.default_az
 
   common_tags = merge(
     var.tags, {
