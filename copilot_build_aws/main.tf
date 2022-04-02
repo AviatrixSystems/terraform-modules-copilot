@@ -2,15 +2,19 @@ resource "aws_vpc" "copilot_vpc" {
   count      = var.use_existing_vpc == false ? 1 : 0
   cidr_block = var.vpc_cidr
   tags = {
-    Name = "copilot_vpc"
+    Name = "${local.name_prefix}copilot_vpc"
   }
+}
+
+data "aws_vpc" "copilot_vpc" {
+  id = var.vpc_id != "" ? var.vpc_id : aws_vpc.copilot_vpc[0].id
 }
 
 resource "aws_internet_gateway" "igw" {
   count  = var.use_existing_vpc == false ? 1 : 0
   vpc_id = aws_vpc.copilot_vpc[0].id
   tags = {
-    Name = "copilot_igw"
+    Name = "${local.name_prefix}copilot_igw"
   }
 }
 
@@ -18,7 +22,7 @@ resource "aws_route_table" "public" {
   count  = var.use_existing_vpc == false ? 1 : 0
   vpc_id = aws_vpc.copilot_vpc[0].id
   tags = {
-    Name = "copilot_rt"
+    Name = "${local.name_prefix}copilot_rt"
   }
 }
 
@@ -38,7 +42,7 @@ resource "aws_subnet" "copilot_subnet" {
   cidr_block        = var.subnet_cidr
   availability_zone = local.default_az
   tags = {
-    Name = "copilot_subnet"
+    Name = "${local.name_prefix}copilot_subnet"
   }
 }
 
@@ -94,7 +98,7 @@ resource "aws_security_group" "AviatrixCopilotSecurityGroup" {
   ]
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}AviatrixCopilotSecurityGroup"
+    Name = "${local.name_prefix}copilot_security_group"
   })
 }
 
@@ -112,7 +116,7 @@ resource "aws_network_interface" "eni-copilot" {
   subnet_id       = var.use_existing_vpc == false ? aws_subnet.copilot_subnet[0].id : var.subnet_id
   security_groups = [aws_security_group.AviatrixCopilotSecurityGroup.id]
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}Aviatrix Copilot interface"
+    Name = "${local.name_prefix}copilot_network_interface"
   })
 }
 
@@ -141,6 +145,9 @@ resource "aws_ebs_volume" "default" {
   count             = var.default_data_volume_name == "" ? 0 : 1
   availability_zone = local.default_az
   size              = var.default_data_volume_size
+  tags = {
+    Name = "${local.name_prefix}copilot_default_data_volume"
+  }
 }
 
 resource "aws_volume_attachment" "default" {
