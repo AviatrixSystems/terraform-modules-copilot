@@ -170,3 +170,7 @@ value = module.copilot_build_oci.private_ip
 - **public_ip**
 
   Copilot public IP.
+
+- **instance_id**
+
+  Instance ID.

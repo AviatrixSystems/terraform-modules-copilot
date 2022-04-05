@@ -5,3 +5,7 @@ output "public_ip" {
 output "private_ip" {
   value = google_compute_instance.copilot.network_interface[0].network_ip
 }
+
+output "instance_id" {
+  value = google_compute_instance.copilot.instance_id
+}

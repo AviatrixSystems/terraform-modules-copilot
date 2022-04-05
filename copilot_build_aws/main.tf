@@ -2,7 +2,7 @@ resource "aws_vpc" "copilot_vpc" {
   count      = var.use_existing_vpc == false ? 1 : 0
   cidr_block = var.vpc_cidr
   tags = {
-    Name = "${local.name_prefix}copilot_vpc"
+    Name = "${local.name_prefix}copilot-vpc"
   }
 }
 
@@ -14,7 +14,7 @@ resource "aws_internet_gateway" "igw" {
   count  = var.use_existing_vpc == false ? 1 : 0
   vpc_id = aws_vpc.copilot_vpc[0].id
   tags = {
-    Name = "${local.name_prefix}copilot_igw"
+    Name = "${local.name_prefix}copilot-igw"
   }
 }
 
@@ -22,7 +22,7 @@ resource "aws_route_table" "public" {
   count  = var.use_existing_vpc == false ? 1 : 0
   vpc_id = aws_vpc.copilot_vpc[0].id
   tags = {
-    Name = "${local.name_prefix}copilot_rt"
+    Name = "${local.name_prefix}copilot-rt"
   }
 }
 
@@ -42,7 +42,7 @@ resource "aws_subnet" "copilot_subnet" {
   cidr_block        = var.subnet_cidr
   availability_zone = local.default_az
   tags = {
-    Name = "${local.name_prefix}copilot_subnet"
+    Name = "${local.name_prefix}copilot-subnet"
   }
 }
 
@@ -98,7 +98,7 @@ resource "aws_security_group" "AviatrixCopilotSecurityGroup" {
   ]
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}copilot_security_group"
+    Name = "${local.name_prefix}copilot-security-group"
   })
 }
 
@@ -116,7 +116,7 @@ resource "aws_network_interface" "eni-copilot" {
   subnet_id       = var.use_existing_vpc == false ? aws_subnet.copilot_subnet[0].id : var.subnet_id
   security_groups = [aws_security_group.AviatrixCopilotSecurityGroup.id]
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}copilot_network_interface"
+    Name = "${local.name_prefix}copilot-network-interface"
   })
 }
 
@@ -137,7 +137,7 @@ resource "aws_instance" "aviatrixcopilot" {
   }
 
   tags = merge(local.common_tags, {
-    Name = var.copilot_name != "" ? var.copilot_name : "${local.name_prefix}AviatrixCopilot"
+    Name = var.copilot_name != "" ? var.copilot_name : (var.type == "Copilot" ? "${local.name_prefix}AviatrixCopilot" : "${local.name_prefix}AviatrixCopilot-arm")
   })
 }
 
@@ -146,7 +146,7 @@ resource "aws_ebs_volume" "default" {
   availability_zone = local.default_az
   size              = var.default_data_volume_size
   tags = {
-    Name = "${local.name_prefix}copilot_default_data_volume"
+    Name = "${local.name_prefix}copilot-default-data-volume"
   }
 }
 
