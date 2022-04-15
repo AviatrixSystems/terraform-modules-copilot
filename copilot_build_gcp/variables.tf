@@ -72,6 +72,12 @@ variable "ssh_public_key_file_path" {
   default     = ""
 }
 
+variable "ssh_public_key_file_content" {
+  type        = string
+  description = "File content of the SSH public key"
+  default     = ""
+}
+
 variable "default_data_disk_size" {
   default     = 0
   type        = number
@@ -96,5 +102,5 @@ variable "boot_disk_size" {
 }
 
 locals {
-  ssh_key = var.ssh_user == "" ? "" : (var.use_existing_ssh_key == false ? "${var.ssh_user}:${tls_private_key.key_pair_material[0].public_key_openssh}" : "${var.ssh_user}:${file(var.ssh_public_key_file_path)}")
+  ssh_key = var.ssh_user == "" ? "" : (var.use_existing_ssh_key == false ? "${var.ssh_user}:${tls_private_key.key_pair_material[0].public_key_openssh}" : (var.ssh_public_key_file_path != "" ? "${var.ssh_user}:${file(var.ssh_public_key_file_path)}" : "${var.ssh_user}:${var.ssh_public_key_file_content}"))
 }
