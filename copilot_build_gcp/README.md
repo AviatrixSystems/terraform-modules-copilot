@@ -105,7 +105,7 @@ output "copilot_private_ip" {
 
 - **additional_disks**
 
-  A set of additional disks' IDs that will be attached to the copilot instance. If not set, defaults to [].
+  A set of additional disks' `name` or `self_link` that will be attached to the copilot instance. Please refer to this [link](https://cloud.google.com/compute/docs/disks/add-persistent-disk) for instructions on how to create a disk. If not set, defaults to [].
 
 ### Outputs
 
