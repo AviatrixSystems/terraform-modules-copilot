@@ -136,7 +136,7 @@ data "aws_ec2_instance_type_offering" "offering" {
 
   filter {
     name   = "instance-type"
-    values = [local.instance_type]
+    values = ["t2.micro", "t3.micro", local.instance_type]
   }
 
   filter {
@@ -145,6 +145,8 @@ data "aws_ec2_instance_type_offering" "offering" {
   }
 
   location_type = "availability-zone"
+
+  preferred_instance_types = [local.instance_type, "t3.micro", "t2.micro"]
 }
 
 locals {
