@@ -47,6 +47,7 @@ variable "virtual_machine_admin_username" {
 variable "virtual_machine_admin_password" {
   type        = string
   description = "Admin Password for the copilot virtual machine"
+  default     = ""
 }
 
 variable "virtual_machine_size" {
@@ -70,6 +71,12 @@ variable "use_existing_ssh_key" {
 variable "ssh_public_key_file_path" {
   type        = string
   description = "File path to the SSH public key"
+  default     = ""
+}
+
+variable "ssh_public_key_file_content" {
+  type        = string
+  description = "File content of the SSH public key"
   default     = ""
 }
 
@@ -114,5 +121,5 @@ variable "additional_disks" {
 }
 
 locals {
-  ssh_key = var.add_ssh_key ? (var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : file(var.ssh_public_key_file_path)) : ""
+  ssh_key = var.add_ssh_key ? (var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : (var.ssh_public_key_file_path != "" ? file(var.ssh_public_key_file_path) : var.ssh_public_key_file_content)) : ""
 }

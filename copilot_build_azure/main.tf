@@ -106,9 +106,7 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
 resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm_ssh" {
   count                           = var.add_ssh_key ? 1 : 0
   admin_username                  = var.virtual_machine_admin_username
-  admin_password                  = var.virtual_machine_admin_password
   name                            = "${var.copilot_name}-vm"
-  disable_password_authentication = false
   location                        = var.location
   network_interface_ids           = [azurerm_network_interface.aviatrix_copilot_nic.id]
   resource_group_name             = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name

@@ -141,7 +141,7 @@ value = module.copilot_build_oci.private_ip
 
   Copilot version. Default: "1.6.1".
 
-> **NOTE:** If **use_existing_ssh_key** is set to false, new keys will be generated. If **use_existing_keypair** is set to true, **ssh_public_key_file_path** is required.
+> **NOTE:** If **use_existing_ssh_key** is set to false, new keys will be generated. If **use_existing_keypair** is set to true, either **ssh_public_key_file_path** or **ssh_public_key_file_content** must be configured.
 
 - **use_existing_ssh_key**
 
@@ -150,6 +150,10 @@ value = module.copilot_build_oci.private_ip
 - **ssh_public_key_file_path**
 
   File path to the SSH public key. If not set, defaults to "".
+
+- **ssh_public_key_file_content**
+
+  File content of the SSH public key. If not set, defaults to "".
 
 > **NOTE:** Please make sure the additional volumes and the copilot vm are in the same availability domain.
 

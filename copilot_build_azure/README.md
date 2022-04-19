@@ -91,7 +91,7 @@ output "copilot_private_ip" {
 
 - **virtual_machine_admin_password**
 
-  Admin Password for the copilot virtual machine.
+  Admin Password for the copilot virtual machine. Required when **add_ssh_key** is false.
 
 - **virtual_machine_size**
 
@@ -109,7 +109,7 @@ output "copilot_private_ip" {
 
   OS disk size for the copilot virtual machine. The minimum size is 30G. Default: 30.
 
-> **NOTE:** If **add_ssh_key** is not set, no SSH key will be added to Copilot. If **use_existing_ssh_key** is set to false, an SSH key will be generated and added to Copilot. If **use_existing_ssh_key** is set to true, **ssh_public_key_file_path** is required.
+> **NOTE:** If **add_ssh_key** is not set, no SSH key will be added to Copilot. If **use_existing_ssh_key** is set to false, an SSH key will be generated and added to Copilot. If **use_existing_ssh_key** is set to true, either **ssh_public_key_file_path** or **ssh_public_key_file_content** must be configured.
 
 - **add_ssh_key**
 
@@ -122,6 +122,10 @@ output "copilot_private_ip" {
 - **ssh_public_key_file_path**
 
   File path to the SSH public key. If not set, defaults to "".
+
+- **ssh_public_key_file_content**
+
+  File content of the SSH public key. If not set, defaults to "".
 
 - **default_data_disk_size**
 

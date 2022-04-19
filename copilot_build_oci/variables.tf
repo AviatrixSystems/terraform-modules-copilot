@@ -144,6 +144,12 @@ variable "ssh_public_key_file_path" {
   default     = ""
 }
 
+variable "ssh_public_key_file_content" {
+  type        = string
+  description = "File content of the SSH public key"
+  default     = ""
+}
+
 variable "default_data_volume_size" {
   default     = 0
   type        = number
@@ -159,5 +165,5 @@ variable "additional_volumes" {
 }
 
 locals {
-  ssh_key = var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : file(var.ssh_public_key_file_path)
+  ssh_key = var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : (var.ssh_public_key_file_path != "" ? file(var.ssh_public_key_file_path) : var.ssh_public_key_file_content)
 }
