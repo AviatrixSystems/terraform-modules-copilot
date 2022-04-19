@@ -116,3 +116,7 @@ output "copilot_private_ip" {
 - **public_ip**
 
   The public IP address of the Google Compute instance created for the copilot.
+
+- **instance_id**
+
+  Instance ID.

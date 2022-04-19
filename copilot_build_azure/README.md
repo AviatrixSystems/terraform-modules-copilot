@@ -140,3 +140,7 @@ output "copilot_private_ip" {
 - **private_ip**
 
   Copilot private IP.
+
+- **resource_group_name**
+
+  Resource group name.
