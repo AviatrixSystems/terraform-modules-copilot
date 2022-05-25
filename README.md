@@ -8,3 +8,5 @@ This module contains the tools to build an Aviatrix Copilot in AWS, Azure, GCP o
 [copilot_build_gcp](./copilot_build_gcp)
 
 [copilot_build_oci](./copilot_build_oci)
+
+[copilot_cluster_initialize](./copilot_cluster_initialize)
