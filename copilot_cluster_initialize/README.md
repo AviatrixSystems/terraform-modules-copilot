@@ -42,7 +42,7 @@ module "copilot_cluster_initialize" {
   Controller public IP.
 
 - **controller_region**
-  controller region"
+  controller region.
 
 - **controller_username**
   Controller username.
