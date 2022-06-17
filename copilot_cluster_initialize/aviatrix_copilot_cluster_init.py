@@ -115,6 +115,8 @@ def send_aviatrix_api(
             elif response_status_code == 404:
                 failure_reason = "ERROR: 404 Not Found"
                 logging.error(failure_reason)
+            else:
+                return response
 
             # if the response code is neither 200 nor 404, repeat the precess (retry)
 
@@ -306,6 +308,7 @@ def init_copilot_cluster(
             "Request payload: %s",
             str(json.dumps(obj=payload_with_hidden_password, indent=4)),
         )
+        data["taskserver"]["password"] = controller_password
     else:
         logging.info("Request payload: %s", str(json.dumps(obj=data, indent=4)))
 
@@ -375,13 +378,13 @@ def function_handler(event):
     all_copilot_regions = [main_copilot_region] + node_copilot_regions
 
     #######################################################
-    # Step 1: Sleep 10min for copilot instances to update #
+    # Step 1: Sleep 5min for copilot instances to get ready #
     #######################################################
-    logging.info("STEP 1 START: Sleep 10min for copilot instances to update.")
+    logging.info("STEP 1 START: Sleep 5min for copilot instances to get ready.")
 
-    time.sleep(600)
+    time.sleep(300)
 
-    logging.info("STEP 1 ENDED: Slept 10min.")
+    logging.info("STEP 1 ENDED: Slept 5min.")
 
     ###########################################################################
     # Step 2: Modify the security groups for controller and copilot instances #
@@ -582,7 +585,7 @@ def function_handler(event):
 
         py_dict = response.json()
         api_return_msg = py_dict["status"]
-        logging.info(py_dict["log"])
+        logging.info(py_dict["message"])
 
         if api_return_msg == "failed":
             raise AviatrixException(message="Initialization failed.")
