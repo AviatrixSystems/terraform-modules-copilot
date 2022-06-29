@@ -10,13 +10,13 @@ class AviatrixException(Exception):
 
 
 def revoke_ingress_rules(
-        access_key,
-        security_key,
+        aws_access_key,
+        aws_secret_access_key,
         ip,
         region,
         rules,
 ):
-    ec2 = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=security_key, region_name=region)
+    ec2 = boto3.client('ec2', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_access_key, region_name=region)
 
     filters = [{
         'Name': 'ip-address',
@@ -49,8 +49,8 @@ def revoke_ingress_rules(
 
 
 def function_handler(event):
-    access_key = event["access_key"]
-    security_key = event["security_key"]
+    aws_access_key = event["aws_access_key"]
+    aws_secret_access_key = event["aws_secret_access_key"]
 
     controller_public_ip = event["controller_public_ip"]
     controller_region = event["controller_region"]
@@ -81,8 +81,8 @@ def function_handler(event):
         )
 
     revoke_ingress_rules(
-        access_key=access_key,
-        security_key=security_key,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
         ip=controller_public_ip,
         region=controller_region,
         rules=controller_rules
@@ -96,16 +96,16 @@ if __name__ == '__main__':
         format="%(asctime)s copilot-cluster-clean--- %(message)s", level=logging.INFO
     )
 
-    access_key = sys.argv[1]
-    security_key = sys.argv[2]
+    aws_access_key = sys.argv[1]
+    aws_secret_access_key = sys.argv[2]
     controller_public_ip = sys.argv[3]
     controller_region = sys.argv[4]
     main_copilot_public_ip = sys.argv[5]
     node_copilot_public_ips = sys.argv[6].split(",")
 
     event = {
-        "access_key": access_key,
-        "security_key": security_key,
+        "aws_access_key": aws_access_key,
+        "aws_secret_access_key": aws_secret_access_key,
         "controller_public_ip": controller_public_ip,
         "controller_region": controller_region,
         "main_copilot_public_ip": main_copilot_public_ip,

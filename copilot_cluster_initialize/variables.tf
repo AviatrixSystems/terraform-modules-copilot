@@ -1,11 +1,11 @@
-variable "access_key" {
+variable "aws_access_key" {
   type        = string
   description = "AWS access key"
 }
 
-variable "security_key" {
+variable "aws_secret_access_key" {
   type        = string
-  description = "AWS security key"
+  description = "AWS secret access key"
 }
 
 variable "controller_public_ip" {

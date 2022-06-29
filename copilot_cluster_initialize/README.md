@@ -9,8 +9,8 @@ This Terraform module initializes a newly created Aviatrix Copilot Cluster. This
 ``` terraform
 module "copilot_cluster_initialize" {
   source                    = "github.com/AviatrixSystems/terraform-module-copilot.git//copilot_cluster_initialize"
-  access_key                = "<< AWS access key >>"
-  security_key              = "<< AWS security key >>"
+  aws_access_key            = "<< AWS access key >>"
+  aws_secret_access_key     = "<< AWS secret access key >>"
   controller_public_ip      = "<< controller public IP >>"
   controller_region         = "<< controller region >>"
   controller_username       = "<< controller username >>"
@@ -32,11 +32,11 @@ module "copilot_cluster_initialize" {
 
 ### Variables
 
-- **access_key** 
+- **aws_access_key** 
   AWS access key.
 
-- **security_key**
-  AWS security key.
+- **aws_secret_access_key**
+  AWS secret access key.
 
 - **controller_public_ip**
   Controller public IP.

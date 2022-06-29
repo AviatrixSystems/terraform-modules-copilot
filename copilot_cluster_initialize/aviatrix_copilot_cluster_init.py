@@ -16,8 +16,8 @@ class AviatrixException(Exception):
 
 
 def add_ingress_rules(
-        access_key,
-        security_key,
+        aws_access_key,
+        aws_secret_access_key,
         ip,
         region,
         rules,
@@ -33,7 +33,7 @@ def add_ingress_rules(
             message="Only one of is_controller and is_copilot can be True.",
         )
 
-    ec2 = boto3.client('ec2', aws_access_key_id=access_key, aws_secret_access_key=security_key, region_name=region)
+    ec2 = boto3.client('ec2', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_access_key, region_name=region)
 
     filters = [{
         'Name': 'ip-address',
@@ -347,8 +347,8 @@ def get_copilot_init_status(
 
 
 def function_handler(event):
-    access_key = event["access_key"]
-    security_key = event["security_key"]
+    aws_access_key = event["aws_access_key"]
+    aws_secret_access_key = event["aws_secret_access_key"]
 
     controller_public_ip = event["controller_public_ip"]
     controller_region = event["controller_region"]
@@ -377,14 +377,14 @@ def function_handler(event):
     all_copilot_private_ips = [main_copilot_private_ip] + node_copilot_private_ips
     all_copilot_regions = [main_copilot_region] + node_copilot_regions
 
-    #######################################################
-    # Step 1: Sleep 5min for copilot instances to get ready #
-    #######################################################
-    logging.info("STEP 1 START: Sleep 5min for copilot instances to get ready.")
+    ###########################################################
+    # Step 1: Sleep 10 min for copilot instances to get ready #
+    ###########################################################
+    logging.info("STEP 1 START: Sleep 10 min for copilot instances to get ready.")
 
-    time.sleep(300)
+    time.sleep(600)
 
-    logging.info("STEP 1 ENDED: Slept 5min.")
+    logging.info("STEP 1 ENDED: Slept 10 min.")
 
     ###########################################################################
     # Step 2: Modify the security groups for controller and copilot instances #
@@ -408,8 +408,8 @@ def function_handler(event):
         )
 
     add_ingress_rules(
-        access_key=access_key,
-        security_key=security_key,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
         ip=controller_public_ip,
         region=controller_region,
         rules=controller_rules,
@@ -485,24 +485,11 @@ def function_handler(event):
     logging.info(copilot_rules)
 
     for i in range(len(all_copilot_public_ips)):
-        # rules_to_use = copilot_rules[: i * 8] + copilot_rules[i * 8 + 8:]
-        # rules_to_use = copilot_rules[: i] + copilot_rules[i + 1:]
-        # rules_to_use.extend([
-        #     {
-        #         "IpProtocol": "tcp",
-        #         "FromPort": 9300,
-        #         "ToPort": 9300,
-        #         "IpRanges": [{
-        #             "CidrIp": "10.0.0.0/16"
-        #         }]
-        #     }
-        # ])
-
         # logging.info(rules_to_use)
         rules_to_use = copilot_rules
         add_ingress_rules(
-            access_key=access_key,
-            security_key=security_key,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
             ip=all_copilot_public_ips[i],
             region=all_copilot_regions[i],
             rules=rules_to_use,
@@ -612,8 +599,8 @@ if __name__ == '__main__':
         format="%(asctime)s copilot-cluster-init--- %(message)s", level=logging.INFO
     )
 
-    access_key = sys.argv[1]
-    security_key = sys.argv[2]
+    aws_access_key = sys.argv[1]
+    aws_secret_access_key = sys.argv[2]
     controller_public_ip = sys.argv[3]
     controller_region = sys.argv[4]
     controller_username = sys.argv[5]
@@ -632,8 +619,8 @@ if __name__ == '__main__':
     node_copilot_names = sys.argv[18].split(",")
 
     event = {
-        "access_key": access_key,
-        "security_key": security_key,
+        "aws_access_key": aws_access_key,
+        "aws_secret_access_key": aws_secret_access_key,
         "controller_public_ip": controller_public_ip,
         "controller_region": controller_region,
         "controller_username": controller_username,
