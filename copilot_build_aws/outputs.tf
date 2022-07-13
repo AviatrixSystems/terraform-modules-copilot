@@ -9,7 +9,7 @@ output "private_ip" {
 }
 
 output "public_ip" {
-  value       = aws_eip.copilot_eip.public_ip
+  value       = concat(aws_eip.copilot_eip.*.public_ip, [null])[0]
   description = "Public IP address of the Aviatrix Copilot"
 }
 

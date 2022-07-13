@@ -12,25 +12,26 @@ class AviatrixException(Exception):
 def revoke_ingress_rules(
         aws_access_key,
         aws_secret_access_key,
-        ip,
+        private_ip,
         region,
         rules,
+        sg_name
 ):
     ec2 = boto3.client('ec2', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_access_key, region_name=region)
 
     filters = [{
-        'Name': 'ip-address',
-        'Values': [ip],
+        'Name': 'private-ip-address',
+        'Values': [private_ip],
     }]
 
     instance = ec2.describe_instances(Filters=filters)
     security_groups = instance['Reservations'][0]['Instances'][0]['SecurityGroups']
 
-    rule_string = 'AviatrixSecurityGroup'
+    # rule_string = 'AviatrixSecurityGroup'
 
     security_group_id = ''
     for sg in security_groups:
-        if rule_string in sg['GroupName']:
+        if sg_name in sg['GroupName']:
             security_group_id = sg['GroupId']
     if not security_group_id:
         raise AviatrixException(
@@ -52,12 +53,20 @@ def function_handler(event):
     aws_access_key = event["aws_access_key"]
     aws_secret_access_key = event["aws_secret_access_key"]
 
-    controller_public_ip = event["controller_public_ip"]
+    controller_private_ip = event["controller_private_ip"]
     controller_region = event["controller_region"]
 
     main_copilot_public_ip = event["main_copilot_public_ip"]
     node_copilot_public_ips = event["node_copilot_public_ips"]
     all_copilot_public_ips = [main_copilot_public_ip] + node_copilot_public_ips
+
+    main_copilot_private_ip = event["main_copilot_private_ip"]
+    node_copilot_private_ips = event["node_copilot_private_ips"]
+    all_copilot_private_ips = [main_copilot_private_ip] + node_copilot_private_ips
+
+    private_mode = event["private_mode"]
+
+    controller_sg_name = event["controller_sg_name"]
 
     ########################################################################################
     # Clean up the security group rules used for copilot cluster deployment in controller  #
@@ -68,25 +77,50 @@ def function_handler(event):
 
     controller_rules = []
 
-    for ip in all_copilot_public_ips:
-        controller_rules.append(
-            {
-                "IpProtocol": "tcp",
-                "FromPort": 443,
-                "ToPort": 443,
-                "IpRanges": [{
-                    "CidrIp": ip + "/32"
-                }]
-            }
-        )
+    if private_mode:
+        for ip in all_copilot_private_ips:
+            controller_rules.append(
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "IpRanges": [{
+                        "CidrIp": ip + "/32"
+                    }]
+                }
+            )
 
-    revoke_ingress_rules(
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        ip=controller_public_ip,
-        region=controller_region,
-        rules=controller_rules
-    )
+        revoke_ingress_rules(
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            private_ip=controller_private_ip,
+            region=controller_region,
+            rules=controller_rules,
+            sg_name=controller_sg_name
+        )
+    else:
+        for ip in all_copilot_public_ips:
+            controller_rules.append(
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "IpRanges": [{
+                        "CidrIp": ip + "/32"
+                    }]
+                }
+            )
+
+        logging.info(controller_rules)
+
+        revoke_ingress_rules(
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            private_ip=controller_private_ip,
+            region=controller_region,
+            rules=controller_rules,
+            sg_name=controller_sg_name
+        )
 
     logging.info("CLEANING UP ENDED: Cleaned up the security group rules in controller.")
 
@@ -96,20 +130,38 @@ if __name__ == '__main__':
         format="%(asctime)s copilot-cluster-clean--- %(message)s", level=logging.INFO
     )
 
-    aws_access_key = sys.argv[1]
-    aws_secret_access_key = sys.argv[2]
-    controller_public_ip = sys.argv[3]
-    controller_region = sys.argv[4]
-    main_copilot_public_ip = sys.argv[5]
-    node_copilot_public_ips = sys.argv[6].split(",")
+    i = 1
+    aws_access_key = sys.argv[i]
+    i += 1
+    aws_secret_access_key = sys.argv[i]
+    i += 1
+    controller_private_ip = sys.argv[i]
+    i += 1
+    controller_region = sys.argv[i]
+    i += 1
+    main_copilot_public_ip = sys.argv[i]
+    i += 1
+    node_copilot_public_ips = sys.argv[i].split(",")
+    i += 1
+    main_copilot_private_ip = sys.argv[i]
+    i += 1
+    node_copilot_private_ips = sys.argv[i].split(",")
+    i += 1
+    private_mode = sys.argv[i]
+    i += 1
+    controller_sg_name = sys.argv[i]
 
     event = {
         "aws_access_key": aws_access_key,
         "aws_secret_access_key": aws_secret_access_key,
-        "controller_public_ip": controller_public_ip,
+        "controller_private_ip": controller_private_ip,
         "controller_region": controller_region,
         "main_copilot_public_ip": main_copilot_public_ip,
         "node_copilot_public_ips": node_copilot_public_ips,
+        "main_copilot_private_ip": main_copilot_private_ip,
+        "node_copilot_private_ips": node_copilot_private_ips,
+        "private_mode": True if private_mode == "true" else False,
+        "controller_sg_name": controller_sg_name
     }
 
     try:

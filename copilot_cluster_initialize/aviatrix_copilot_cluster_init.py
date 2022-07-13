@@ -18,39 +18,25 @@ class AviatrixException(Exception):
 def add_ingress_rules(
         aws_access_key,
         aws_secret_access_key,
-        ip,
+        private_ip,
         region,
         rules,
-        is_controller=False,
-        is_copilot=False
+        sg_name
 ):
-    if not is_controller and not is_copilot:
-        raise AviatrixException(
-            message="Either is_controller or is_copilot must be True.",
-        )
-    if is_controller and is_copilot:
-        raise AviatrixException(
-            message="Only one of is_controller and is_copilot can be True.",
-        )
-
-    ec2 = boto3.client('ec2', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_access_key, region_name=region)
+    ec2 = boto3.client('ec2', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_access_key,
+                       region_name=region)
 
     filters = [{
-        'Name': 'ip-address',
-        'Values': [ip],
+        'Name': 'private-ip-address',
+        'Values': [private_ip],
     }]
 
     instance = ec2.describe_instances(Filters=filters)
     security_groups = instance['Reservations'][0]['Instances'][0]['SecurityGroups']
 
-    if is_controller:
-        rule_string = 'AviatrixSecurityGroup'
-    else:
-        rule_string = 'AviatrixCopilotSecurityGroup'
-
     security_group_id = ''
     for sg in security_groups:
-        if rule_string in sg['GroupName']:
+        if sg_name in sg['GroupName']:
             security_group_id = sg['GroupId']
     if not security_group_id:
         raise AviatrixException(
@@ -277,7 +263,7 @@ def init_copilot_cluster(
     }
 
     cluster_db = []
-    for public_ip, private_ip, volume, name in init_info:
+    for private_ip, volume, name in init_info:
         cluster = {
             "physicalVolumes": [volume],
             "clusterNodeName": name,
@@ -351,6 +337,7 @@ def function_handler(event):
     aws_secret_access_key = event["aws_secret_access_key"]
 
     controller_public_ip = event["controller_public_ip"]
+    controller_private_ip = event["controller_private_ip"]
     controller_region = event["controller_region"]
     controller_username = event["controller_username"]
     controller_password = event["controller_password"]
@@ -369,13 +356,28 @@ def function_handler(event):
     node_copilot_data_volumes = event["node_copilot_data_volumes"]
     node_copilot_names = event["node_copilot_names"]
 
-    login_info = zip([main_copilot_public_ip] + node_copilot_public_ips,
+    private_mode = event["private_mode"]
+
+    controller_sg_name = event["controller_sg_name"]
+    main_copilot_sg_name = event["main_copilot_sg_name"]
+    node_copilot_sg_names = event["node_copilot_sg_names"]
+
+    controller_login_ip = controller_private_ip if private_mode else controller_public_ip
+    main_copilot_login_ip = main_copilot_private_ip if private_mode else main_copilot_public_ip
+
+    login_info = zip([main_copilot_private_ip] + node_copilot_private_ips,
                      [main_copilot_username] + node_copilot_usernames,
-                     [main_copilot_password] + node_copilot_passwords)
-    init_info = zip(node_copilot_public_ips, node_copilot_private_ips, node_copilot_data_volumes, node_copilot_names)
+                     [main_copilot_password] + node_copilot_passwords) if private_mode else \
+        zip([main_copilot_public_ip] + node_copilot_public_ips,
+            [main_copilot_username] + node_copilot_usernames,
+            [main_copilot_password] + node_copilot_passwords)
+
+    init_info = zip(node_copilot_private_ips, node_copilot_data_volumes, node_copilot_names)
+
     all_copilot_public_ips = [main_copilot_public_ip] + node_copilot_public_ips
     all_copilot_private_ips = [main_copilot_private_ip] + node_copilot_private_ips
     all_copilot_regions = [main_copilot_region] + node_copilot_regions
+    all_copilot_sg_names = [main_copilot_sg_name] + node_copilot_sg_names
 
     ###########################################################
     # Step 1: Sleep 10 min for copilot instances to get ready #
@@ -395,26 +397,48 @@ def function_handler(event):
 
     controller_rules = []
 
-    for ip in all_copilot_public_ips:
-        controller_rules.append(
-            {
-                "IpProtocol": "tcp",
-                "FromPort": 443,
-                "ToPort": 443,
-                "IpRanges": [{
-                    "CidrIp": ip + "/32"
-                }]
-            }
-        )
+    if private_mode:
+        for ip in all_copilot_private_ips:
+            controller_rules.append(
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "IpRanges": [{
+                        "CidrIp": ip + "/32"
+                    }]
+                }
+            )
 
-    add_ingress_rules(
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        ip=controller_public_ip,
-        region=controller_region,
-        rules=controller_rules,
-        is_controller=True
-    )
+        add_ingress_rules(
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            private_ip=controller_private_ip,
+            region=controller_region,
+            rules=controller_rules,
+            sg_name=controller_sg_name
+        )
+    else:
+        for ip in all_copilot_public_ips:
+            controller_rules.append(
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "IpRanges": [{
+                        "CidrIp": ip + "/32"
+                    }]
+                }
+            )
+
+        add_ingress_rules(
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            private_ip=controller_private_ip,
+            region=controller_region,
+            rules=controller_rules,
+            sg_name=controller_sg_name
+        )
 
     # logging.info(controller_rules)
 
@@ -422,79 +446,118 @@ def function_handler(event):
 
     copilot_rules = []
 
-    for ip in all_copilot_public_ips:
-        copilot_rules.extend(
-            [
-                {
-                    "IpProtocol": "tcp",
-                    "FromPort": 443,
-                    "ToPort": 443,
-                    "IpRanges": [{
-                        "CidrIp": ip + "/32"
-                    }]
-                },
-                {
-                    "IpProtocol": "tcp",
-                    "FromPort": 9200,
-                    "ToPort": 9200,
-                    "IpRanges": [{
-                        "CidrIp": ip + "/32"
-                    }]
-                },
-                {
-                    "IpProtocol": "tcp",
-                    "FromPort": 9300,
-                    "ToPort": 9300,
-                    "IpRanges": [{
-                        "CidrIp": ip + "/32"
-                    }]
-                }
-            ]
-        )
+    if private_mode:
+        for ip in all_copilot_private_ips:
+            copilot_rules.extend(
+                [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 443,
+                        "ToPort": 443,
+                        "IpRanges": [{
+                            "CidrIp": ip + "/32"
+                        }]
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 9200,
+                        "ToPort": 9200,
+                        "IpRanges": [{
+                            "CidrIp": ip + "/32"
+                        }]
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 9300,
+                        "ToPort": 9300,
+                        "IpRanges": [{
+                            "CidrIp": ip + "/32"
+                        }]
+                    }
+                ]
+            )
 
-    for ip in all_copilot_private_ips:
-        copilot_rules.extend(
-            [
-                {
-                    "IpProtocol": "tcp",
-                    "FromPort": 443,
-                    "ToPort": 443,
-                    "IpRanges": [{
-                        "CidrIp": ip + "/32"
-                    }]
-                },
-                {
-                    "IpProtocol": "tcp",
-                    "FromPort": 9200,
-                    "ToPort": 9200,
-                    "IpRanges": [{
-                        "CidrIp": ip + "/32"
-                    }]
-                },
-                {
-                    "IpProtocol": "tcp",
-                    "FromPort": 9300,
-                    "ToPort": 9300,
-                    "IpRanges": [{
-                        "CidrIp": ip + "/32"
-                    }]
-                }
-            ]
-        )
+        for i in range(len(all_copilot_private_ips)):
+            add_ingress_rules(
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                private_ip=all_copilot_private_ips[i],
+                region=all_copilot_regions[i],
+                rules=copilot_rules,
+                sg_name=all_copilot_sg_names[i]
+            )
+    else:
+        for ip in all_copilot_public_ips:
+            copilot_rules.extend(
+                [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 443,
+                        "ToPort": 443,
+                        "IpRanges": [{
+                            "CidrIp": ip + "/32"
+                        }]
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 9200,
+                        "ToPort": 9200,
+                        "IpRanges": [{
+                            "CidrIp": ip + "/32"
+                        }]
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 9300,
+                        "ToPort": 9300,
+                        "IpRanges": [{
+                            "CidrIp": ip + "/32"
+                        }]
+                    }
+                ]
+            )
 
-    logging.info(copilot_rules)
+        for ip in all_copilot_private_ips:
+            copilot_rules.extend(
+                [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 443,
+                        "ToPort": 443,
+                        "IpRanges": [{
+                            "CidrIp": ip + "/32"
+                        }]
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 9200,
+                        "ToPort": 9200,
+                        "IpRanges": [{
+                            "CidrIp": ip + "/32"
+                        }]
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 9300,
+                        "ToPort": 9300,
+                        "IpRanges": [{
+                            "CidrIp": ip + "/32"
+                        }]
+                    }
+                ]
+            )
 
-    for i in range(len(all_copilot_public_ips)):
-        # logging.info(rules_to_use)
-        rules_to_use = copilot_rules
-        add_ingress_rules(
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            ip=all_copilot_public_ips[i],
-            region=all_copilot_regions[i],
-            rules=rules_to_use,
-            is_copilot=True
-        )
+        for i in range(len(all_copilot_public_ips)):
+            add_ingress_rules(
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                private_ip=all_copilot_private_ips[i],
+                region=all_copilot_regions[i],
+                rules=copilot_rules,
+                sg_name=all_copilot_sg_names[i]
+            )
+
+    # logging.info(copilot_rules)
 
     logging.info("STEP 2 ENDED: Modified the security groups for controller and copilot instances.")
 
@@ -504,7 +567,7 @@ def function_handler(event):
     logging.info("STEP 3 START: Login controller.")
 
     response = login_controller(
-        controller_ip=controller_public_ip,
+        controller_ip=controller_login_ip,
         username=controller_username,
         password=controller_password
     )
@@ -518,7 +581,7 @@ def function_handler(event):
     #################################################################################
     logging.info("STEP 4 START: Try to login main copilot and cluster nodes. Retry every 10s for 2min.")
 
-    copilot_login_driver(controller_ip=controller_public_ip, login_info=login_info)
+    copilot_login_driver(controller_ip=controller_login_ip, login_info=login_info)
 
     logging.info("STEP 4 ENDED: Logged into main copilot and cluster nodes.")
 
@@ -528,7 +591,7 @@ def function_handler(event):
     logging.info("STEP 5 START: Login controller to get CID.")
 
     response = login_controller(
-        controller_ip=controller_public_ip,
+        controller_ip=controller_login_ip,
         username=controller_username,
         password=controller_password
     )
@@ -546,14 +609,14 @@ def function_handler(event):
     response = init_copilot_cluster(
         controller_username=controller_username,
         controller_password=controller_password,
-        main_copilot_ip=main_copilot_public_ip,
+        main_copilot_ip=main_copilot_login_ip,
         init_info=init_info,
-        CID=CID,
+        CID=CID
     )
 
     if response.status_code != 200:
         raise AviatrixException(message="Initialization API call failed")
-        
+
     logging.info("STEP 6 ENDED: Called API to initialize copilot cluster.")
 
     #######################################
@@ -563,10 +626,10 @@ def function_handler(event):
 
     retry_count = 30
     sleep_between_retries = 30
-    
+
     for i in range(retry_count):
         response = get_copilot_init_status(
-            main_copilot_ip=main_copilot_public_ip,
+            main_copilot_ip=main_copilot_login_ip,
             CID=CID
         )
 
@@ -590,7 +653,7 @@ def function_handler(event):
             raise AviatrixException(
                 message="Exceed the max retry times. Initialization still not done.",
             )
-        
+
     logging.info("STEP 7 ENDED: Initialization status check is done.")
 
 
@@ -599,29 +662,58 @@ if __name__ == '__main__':
         format="%(asctime)s copilot-cluster-init--- %(message)s", level=logging.INFO
     )
 
-    aws_access_key = sys.argv[1]
-    aws_secret_access_key = sys.argv[2]
-    controller_public_ip = sys.argv[3]
-    controller_region = sys.argv[4]
-    controller_username = sys.argv[5]
-    controller_password = sys.argv[6]
-    main_copilot_public_ip = sys.argv[7]
-    main_copilot_private_ip = sys.argv[8]
-    main_copilot_region = sys.argv[9]
-    main_copilot_username = sys.argv[10]
-    main_copilot_password = sys.argv[11]
-    node_copilot_public_ips = sys.argv[12].split(",")
-    node_copilot_private_ips = sys.argv[13].split(",")
-    node_copilot_regions = sys.argv[14].split(",")
-    node_copilot_usernames = sys.argv[15].split(",")
-    node_copilot_passwords = sys.argv[16].split(",")
-    node_copilot_data_volumes = sys.argv[17].split(",")
-    node_copilot_names = sys.argv[18].split(",")
+    i = 1
+    aws_access_key = sys.argv[i]
+    i += 1
+    aws_secret_access_key = sys.argv[i]
+    i += 1
+    controller_public_ip = sys.argv[i]
+    i += 1
+    controller_private_ip = sys.argv[i]
+    i += 1
+    controller_region = sys.argv[i]
+    i += 1
+    controller_username = sys.argv[i]
+    i += 1
+    controller_password = sys.argv[i]
+    i += 1
+    main_copilot_public_ip = sys.argv[i]
+    i += 1
+    main_copilot_private_ip = sys.argv[i]
+    i += 1
+    main_copilot_region = sys.argv[i]
+    i += 1
+    main_copilot_username = sys.argv[i]
+    i += 1
+    main_copilot_password = sys.argv[i]
+    i += 1
+    node_copilot_public_ips = sys.argv[i].split(",")
+    i += 1
+    node_copilot_private_ips = sys.argv[i].split(",")
+    i += 1
+    node_copilot_regions = sys.argv[i].split(",")
+    i += 1
+    node_copilot_usernames = sys.argv[i].split(",")
+    i += 1
+    node_copilot_passwords = sys.argv[i].split(",")
+    i += 1
+    node_copilot_data_volumes = sys.argv[i].split(",")
+    i += 1
+    node_copilot_names = sys.argv[i].split(",")
+    i += 1
+    private_mode = sys.argv[i]
+    i += 1
+    controller_sg_name = sys.argv[i]
+    i += 1
+    main_copilot_sg_name = sys.argv[i]
+    i += 1
+    node_copilot_sg_names = sys.argv[i].split(",")
 
     event = {
         "aws_access_key": aws_access_key,
         "aws_secret_access_key": aws_secret_access_key,
         "controller_public_ip": controller_public_ip,
+        "controller_private_ip": controller_private_ip,
         "controller_region": controller_region,
         "controller_username": controller_username,
         "controller_password": controller_password,
@@ -636,7 +728,11 @@ if __name__ == '__main__':
         "node_copilot_usernames": node_copilot_usernames,
         "node_copilot_passwords": node_copilot_passwords,
         "node_copilot_data_volumes": node_copilot_data_volumes,
-        "node_copilot_names": node_copilot_names
+        "node_copilot_names": node_copilot_names,
+        "private_mode": True if private_mode == "true" else False,
+        "controller_sg_name": controller_sg_name,
+        "main_copilot_sg_name": main_copilot_sg_name,
+        "node_copilot_sg_names": node_copilot_sg_names
     }
 
     try:

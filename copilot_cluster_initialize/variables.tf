@@ -11,6 +11,12 @@ variable "aws_secret_access_key" {
 variable "controller_public_ip" {
   type        = string
   description = "controller public IP"
+  default     = "0.0.0.0"
+}
+
+variable "controller_private_ip" {
+  type        = string
+  description = "controller private IP"
 }
 
 variable "controller_region" {
@@ -28,9 +34,15 @@ variable "controller_password" {
   description = "controller password"
 }
 
+variable "controller_sg_name" {
+  type        = string
+  description = "controller security group name"
+}
+
 variable "main_copilot_public_ip" {
   type        = string
   description = "main copilot public IP"
+  default     = "0.0.0.0"
 }
 
 variable "main_copilot_private_ip" {
@@ -53,9 +65,15 @@ variable "main_copilot_password" {
   description = "main copilot password"
 }
 
+variable "main_copilot_sg_name" {
+  type        = string
+  description = "main copilot security group name"
+}
+
 variable "node_copilot_public_ips" {
   type        = list(string)
   description = "list of node copilot public IPs"
+  default     = ["0.0.0.0"]
 }
 
 variable "node_copilot_private_ips" {
@@ -86,4 +104,15 @@ variable "node_copilot_data_volumes" {
 variable "node_copilot_names" {
   type        = list(string)
   description = "list of node copilot names"
+}
+
+variable "node_copilot_sg_names" {
+  type        = list(string)
+  description = "list of node copilot security group names"
+}
+
+variable "private_mode"{
+  type        = bool
+  description = "in private mode or not"
+  default     = false
 }

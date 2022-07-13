@@ -135,6 +135,9 @@ output "copilot_public_ip" {
 
   Map of additional volumes that will be attached to the copilot instance. Please set device_name(string) and volume_id(string) in each map element. Please see the example code above for example.
 
+- **private_mode**
+
+  Flag to indicate whether the copilot is for private mode. Default: false.
 
 ### Outputs
 
