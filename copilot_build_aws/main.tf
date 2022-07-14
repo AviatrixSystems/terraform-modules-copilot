@@ -100,16 +100,25 @@ resource "aws_security_group" "AviatrixCopilotSecurityGroup" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}copilot_security_group"
   })
+
+  lifecycle {
+    ignore_changes = [
+      ingress,
+      egress,
+    ]
+  }
 }
 
 resource "aws_eip" "copilot_eip" {
-  vpc  = true
-  tags = local.common_tags
+  count = var.private_mode == false ? 1 : 0
+  vpc   = true
+  tags  = local.common_tags
 }
 
 resource "aws_eip_association" "eip_assoc" {
+  count         = var.private_mode == false ? 1 : 0
   instance_id   = aws_instance.aviatrixcopilot.id
-  allocation_id = aws_eip.copilot_eip.id
+  allocation_id = aws_eip.copilot_eip[0].id
 }
 
 resource "aws_network_interface" "eni-copilot" {
@@ -118,6 +127,12 @@ resource "aws_network_interface" "eni-copilot" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}copilot_network_interface"
   })
+
+  lifecycle {
+    ignore_changes = [
+      security_groups,
+    ]
+  }
 }
 
 resource "aws_instance" "aviatrixcopilot" {

@@ -60,11 +60,11 @@ variable "type" {
 variable "root_volume_size" {
   type        = number
   description = "Root volume size for copilot"
-  default     = 25
+  default     = 30
 
   validation {
-    condition     = var.root_volume_size >= 25
-    error_message = "The minimum root volume size is 25G."
+    condition     = var.root_volume_size >= 30
+    error_message = "The minimum root volume size is 30G."
   }
 }
 
@@ -118,6 +118,12 @@ variable "additional_volumes" {
     device_name = string,
     volume_id   = string,
   }))
+}
+
+variable "private_mode" {
+  type        = bool
+  description = "Flag to indicate whether the copilot is for private mode"
+  default     = false
 }
 
 data "aws_region" "current" {}

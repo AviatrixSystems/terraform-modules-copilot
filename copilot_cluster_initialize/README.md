@@ -4,39 +4,477 @@
 
 This Terraform module initializes a newly created Aviatrix Copilot Cluster. This module currently only supports AWS.
 
-### Usage
+### Example of Launching Copilot Instances and Initializing the Cluster
 
-``` terraform
-module "copilot_cluster_initialize" {
-  source                    = "github.com/AviatrixSystems/terraform-module-copilot.git//copilot_cluster_initialize"
-  access_key                = "<< AWS access key >>"
-  security_key              = "<< AWS security key >>"
-  controller_public_ip      = "<< controller public IP >>"
-  controller_region         = "<< controller region >>"
-  controller_username       = "<< controller username >>"
-  controller_password       = "<< controller password >>"
-  main_copilot_public_ip    = "<< main copilot public IP >>"
-  main_copilot_private_ip   = "<< main copilot private IP >>"
-  main_copilot_region       = "<< main copilot region >>"
-  main_copilot_username     = "<< main copilot username >>"
-  main_copilot_password     = "<< main copilot password >>"
-  node_copilot_public_ips   = ["<< node1 public IP >>", "<< node2 public IP >>", "<< node3 public IP >>", ...]
-  node_copilot_private_ips  = ["<< node1 private IP >>", "<< node2 private IP >>", "<< node3 private IP >>", ...]
-  node_copilot_regions      = ["<< node1 region >>", "<< node2 region >>", "<< node3 region >>", ...]
-  node_copilot_usernames    = ["<< node1 username >>", "<< node2 username >>", "<< node3 username >>", ...]
-  node_copilot_passwords    = ["<< node1 password >>", "<< node2 password >>", "<< node3 password >>", ...]
-  node_copilot_data_volumes = ["<< node1 data volume >>", "<< node2 data volume >>", "<< node3 data volume >>", ...]
-  node_copilot_names        = ["<< node1 name>>", "<< node2 name >>", "<< node3 name >>", ...]
+>**NOTE:** No matter whether it's in private mode or not, main copilot and nodes **must** be in the same VPC.
+
+**Case 1: Not in private mode**
+
+**In this case, controller and copilot cluster can be in different VPCs.** In the following example:
+1. A main copilot instance is launched using the [copilot_build_aws](../copilot_build_aws) module.
+2. In the same VPC where the main copilot is, three node copilot instances are launched using the [copilot_build_aws](../copilot_build_aws) module.
+3. The copilot cluster is initialized using the [copilot_cluster_initialize](../copilot_cluster_initialize) module.
+4. Some settings in the controller are configured using the [Aviatrix Terraform provider](https://registry.terraform.io/providers/AviatrixSystems/aviatrix/2.23.0).
+
+> **NOTE:** 
+> 1. After the cluster has been successfully initialized, the following settings need to be configured in the Aviatrix controller. This is the reason for the step 4 above.
+> * Enable syslog configuration for main copilot
+> * Enable netflow configuration for main copilot
+> * Enable copilot security group management in controller
+> 2. After deployment, the main copilot ports 31283 and 5000 will be open for any IP (0.0.0.0/0). It is strongly recommended to remove the 0.0.0.0 entry from the CoPilot security group for these ports and add entries for all of your gateway IP addresses.
+
+``` hcl
+// ************
+// ** Step 1 **
+// ************
+
+provider "aws" {
+  region     = "<< REGION >>"
+  access_key = "<< AWS ACCESS KEY >>"
+  secret_key = "<< AWS SECRET ACCESS KEY >>"
+}
+
+module "main" {
+  source  = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  type    = "Copilot"
+  keypair = "copilot_kp" // "copilot_kp" is an example here
+  
+  allowed_cidrs = {
+    "tcp_cidrs" = {
+      protocol = "tcp"
+      port     = "443"
+      cidrs    = ["<< CIDRS ALLOWED FOR HTTPS ACCESS >>"] // your current IP must be included
+    }
+    "udp_cidrs_1" = {
+      protocol = "udp"
+      port     = "5000"
+      cidrs    = ["0.0.0.0/0"]
+    }
+    "udp_cidrs_2" = {
+      protocol = "udp"
+      port     = "31283"
+      cidrs    = ["0.0.0.0/0"]
+    }
+  }
+}
+
+// ************
+// ** Step 2 **
+// ************
+
+data "aws_route_table" "rtb" {
+  subnet_id = module.main.ec2-info[0].subnet_id
+}
+
+resource "aws_subnet" "node1_subnet" {
+  vpc_id     = module.main.vpc_id
+  cidr_block = "10.0.2.0/24" // "10.0.2.0/24" is an example here
+  
+  tags = {
+    Name = "node1_subnet"
+  }
+}
+
+resource "aws_route_table_association" "rta-n1" {
+  subnet_id      = aws_subnet.node1_subnet.id
+  route_table_id = data.aws_route_table.rtb.id
+}
+
+resource "aws_subnet" "node2_subnet" {
+  vpc_id     = module.main.vpc_id
+  cidr_block = "10.0.3.0/24" // "10.0.3.0/24" is an example here
+  
+  tags = {
+    Name = "node2_subnet"
+  }
+}
+
+resource "aws_route_table_association" "rta-n2" {
+  subnet_id      = aws_subnet.node2_subnet.id
+  route_table_id = data.aws_route_table.rtb.id
+}
+
+resource "aws_subnet" "node3_subnet" {
+  vpc_id     = module.main.vpc_id
+  cidr_block = "10.0.4.0/24" // "10.0.4.0/24" is an example here
+  
+  tags = {
+    Name = "node3_subnet"
+  }
+}
+
+resource "aws_route_table_association" "rta-n3" {
+  subnet_id      = aws_subnet.node3_subnet.id
+  route_table_id = data.aws_route_table.rtb.id
+}
+
+module "node1" {
+  source                   = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  use_existing_vpc         = true
+  vpc_id                   = module.main.vpc_id
+  subnet_id                = aws_subnet.node1_subnet.id
+  name_prefix              = "node1"
+  use_existing_keypair     = true
+  keypair                  = module.main.ec2-info[0].key_name
+  default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here
+  
+  allowed_cidrs = {
+    "tcp_cidrs" = {
+      protocol = "tcp"
+      port     = "443"
+      cidrs    = ["<< CIDRS ALLOWED FOR HTTPS ACCESS >>"] // your current IP must be included
+    }
+  }
+}
+
+module "node2" {
+  source                   = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  use_existing_vpc         = true
+  vpc_id                   = module.main.vpc_id
+  subnet_id                = aws_subnet.node2_subnet.id
+  name_prefix              = "node2"
+  use_existing_keypair     = true
+  keypair                  = module.main.ec2-info[0].key_name
+  default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
+  
+  allowed_cidrs = {
+    "tcp_cidrs" = {
+      protocol = "tcp"
+      port     = "443"
+      cidrs    = ["<< CIDRS ALLOWED FOR HTTPS ACCESS >>"] // your current IP must be included
+    }
+  }
+}
+
+module "node3" {
+  source                   = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  use_existing_vpc         = true
+  vpc_id                   = module.main.vpc_id
+  subnet_id                = aws_subnet.node3_subnet.id
+  name_prefix              = "node3"
+  use_existing_keypair     = true
+  keypair                  = module.main.ec2-info[0].key_name
+  default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
+  
+  allowed_cidrs = {
+    "tcp_cidrs" = {
+      protocol = "tcp"
+      port     = "443"
+      cidrs    = ["<< CIDRS ALLOWED FOR HTTPS ACCESS >>"] // your current IP must be included
+    }
+  }
+}
+
+// ************
+// ** Step 3 **
+// ************
+
+module "init" {
+  source                    = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_cluster_initialize"
+  aws_access_key            = "<< AWS ACCESS KEY >>"
+  aws_secret_access_key     = "<< AWS SECRET ACCESS KEY>>"
+  controller_public_ip      = "<< CONTROLLER PUBLIC IP >>"
+  controller_region         = "<< CONTROLLER REGION >>"
+  controller_username       = "<< CONTROLLER USERNAME >>"
+  controller_password       = "<< CONTROLLER PASSWORD >>"
+  controller_sg_name        = "<< CONTROLLER SG NAME >>"
+  main_copilot_public_ip    = module.main.public_ip
+  main_copilot_private_ip   = module.main.private_ip
+  main_copilot_region       = module.main.region
+  main_copilot_username     = "<< CONTROLLER USERNAME >>"
+  main_copilot_password     = "<< CONTROLLER PASSWORD >>"
+  main_copilot_sg_name      = "AviatrixCopilotSecurityGroup"
+  node_copilot_public_ips   = [module.node1.public_ip, module.node2.public_ip, module.node3.public_ip]
+  node_copilot_private_ips  = [module.node1.private_ip, module.node2.private_ip, module.node3.private_ip]
+  node_copilot_regions      = [module.node1.region, module.node2.region, module.node3.region]
+  node_copilot_usernames    = ["<< CONTROLLER USERNAME >>", "<< CONTROLLER USERNAME >>", "<< CONTROLLER USERNAME >>"] // please use controller username
+  node_copilot_passwords    = ["<< CONTROLLER PASSWORD >>", "<< CONTROLLER PASSWORD >>", "<< CONTROLLER PASSWORD >>"] // please use controller password
+  node_copilot_data_volumes = ["/dev/sdf", "/dev/sdf", "/dev/sdf"]
+  node_copilot_names        = ["node1", "node2", "node3"]
+  node_copilot_sg_names     = ["AviatrixCopilotSecurityGroup", "AviatrixCopilotSecurityGroup", "AviatrixCopilotSecurityGroup"]
+}
+
+output "main_public_ip" {
+  value = module.main.public_ip
+}
+output "main_private_ip" {
+  value = module.main.private_ip
+}
+output "node1_public_ip" {
+  value = module.node1.public_ip
+}
+output "node1_private_ip" {
+  value = module.node1.private_ip
+}
+output "node2_public_ip" {
+  value = module.node2.public_ip
+}
+output "node2_private_ip" {
+  value = module.node2.private_ip
+}
+output "node3_public_ip" {
+  value = module.node3.public_ip
+}
+output "node3_private_ip" {
+  value = module.node3.private_ip
+}
+
+// ************
+// ** Step 4 **
+// ************
+
+terraform {
+  required_providers {
+    aviatrix = {
+      source  = "AviatrixSystems/aviatrix"
+      version = "2.23.0" // version 2.23+ is required
+    }
+  }
+}
+
+provider "aviatrix" {
+  username      = "<< CONTROLLER USERNAME >>"
+  password      = "<< CONTROLLER PASSWORD >>"
+  controller_ip = "<< CONTROLLER PUBLIC IP >>"
+}
+
+resource "aviatrix_remote_syslog" "copilot_remote_syslog" {
+  index    = 9
+  name     = "example"
+  server   = module.main.public_ip
+  port     = 5000
+  protocol = "UDP"
+}
+
+resource "aviatrix_netflow_agent" "copilot_netflow_agent" {
+  server_ip = module.main.public_ip
+  port      = 31283
+}
+
+resource "aviatrix_copilot_security_group_management_config" "copilot_sg_mgmt" {
+  cloud_type                               = 1
+  account_name                             = "<< ACCESS ACCOUNT NAME >>"
+  region                                   = module.main.region
+  vpc_id                                   = module.main.vpc_id
+  instance_id                              = module.main.ec2-info[0].id
+  enable_copilot_security_group_management = true
+}
+```
+
+**Case 2: In private mode**
+
+**In this case, controller and copilot cluster must be in the same VPC. Before running the example, subnets for the cluster should be set up. The code must be run on a machine which has access to the internet, the controller and the copilot cluster (main and nodes).** 
+
+In the following example:
+1. In the VPC where the controller is, a main copilot instance is launched using the [copilot_build_aws](../copilot_build_aws) module.
+2. In the same VPC where the main copilot is, three node copilot instances are launched using the [copilot_build_aws](../copilot_build_aws) module.
+3. The copilot cluster is initialized using the [copilot_cluster_initialize](../copilot_cluster_initialize) module.
+4. Some settings in the controller are configured using the [Aviatrix Terraform provider](https://registry.terraform.io/providers/AviatrixSystems/aviatrix/2.23.0).
+
+> **NOTE:** 
+> 1. After the cluster has been successfully initialized, the following settings need to be configured in the Aviatrix controller. This is the reason for the step 4 above.
+> * Enable syslog configuration for main copilot
+> * Enable netflow configuration for main copilot
+> 2. After deployment, the main copilot ports 31283 and 5000 will be open for any IP (0.0.0.0/0). It is strongly recommended to remove the 0.0.0.0 entry from the CoPilot security group for these ports and add entries for all of your gateway IP addresses.
+
+``` hcl
+// ************
+// ** Step 1 **
+// ************
+
+provider "aws" {
+  region     = "<< REGION >>"
+  access_key = "<< AWS ACCESS KEY >>"
+  secret_key = "<< AWS SECRET ACCESS KEY >>"
+}
+
+module "main" {
+  source           = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  type             = "Copilot"
+  use_existing_vpc = true
+  vpc_id           = "<< VPC ID >>"
+  subnet_id        = "<< SUBNET ID >>"
+  keypair          = "copilot_kp" // "copilot_kp" is an example here  
+  private_mode     = true
+    
+  allowed_cidrs = {
+    "tcp_cidrs_1" = {
+      protocol = "tcp"
+      port     = "443"
+      cidrs    = ["<< CIDRS ALLOWED FOR HTTPS ACCESS >>"] // your current IP must be included
+    }
+    "tcp_cidrs_2" = {
+      protocol = "tcp"
+      port     = "5000"
+      cidrs    = ["0.0.0.0/0"]
+    }
+    "udp_cidrs_3" = {
+      protocol = "tcp"
+      port     = "31283"
+      cidrs    = ["0.0.0.0/0"]
+    }
+  }
+}
+
+// ************
+// ** Step 2 **
+// ************
+
+module "node1" {
+  source                   = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  use_existing_vpc         = true
+  vpc_id                   = "<< VPC ID >>"
+  subnet_id                = "<< SUBNET ID >>"
+  name_prefix              = "node1"
+  use_existing_keypair     = true
+  keypair                  = module.main.ec2-info[0].key_name
+  default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
+  private_mode             = true
+    
+  allowed_cidrs = {
+    "tcp_cidrs" = {
+      protocol = "tcp"
+      port     = "443"
+      cidrs    = ["<< CIDRS ALLOWED FOR HTTPS ACCESS >>"] // your current IP must be included
+    }
+  }
+}
+
+module "node2" {
+  source                   = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  use_existing_vpc         = true
+  vpc_id                   = "<< VPC ID >>"
+  subnet_id                = "<< SUBNET ID >>"
+  name_prefix              = "node2"
+  use_existing_keypair     = true
+  keypair                  = module.main.ec2-info[0].key_name
+  default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
+  private_mode             = true
+  
+  allowed_cidrs = {
+    "tcp_cidrs" = {
+      protocol = "tcp"
+      port     = "443"
+      cidrs    = ["<< CIDRS ALLOWED FOR HTTPS ACCESS >>"] // your current IP must be included
+    }
+  }
+}
+
+module "node3" {
+  source                   = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  use_existing_vpc         = true
+  vpc_id                   = "<< VPC ID >>"
+  subnet_id                = "<< SUBNET ID >>"
+  name_prefix              = "node3"
+  use_existing_keypair     = true
+  keypair                  = module.main.ec2-info[0].key_name
+  default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
+  private_mode             = true
+  
+  allowed_cidrs = {
+    "tcp_cidrs" = {
+      protocol = "tcp"
+      port     = "443"
+      cidrs    = ["<< CIDRS ALLOWED FOR HTTPS ACCESS >>"] // your current IP must be included
+    }
+  }
+}
+
+// ************
+// ** Step 3 **
+// ************
+
+module "init" {
+  source                    = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_cluster_initialize"
+  aws_access_key            = "<< AWS ACCESS KEY >>"
+  aws_secret_access_key     = "<< AWS SECRET ACCESS KEY>>"
+  controller_public_ip      = "<< CONTROLLER PUBLIC IP >>"
+  controller_region         = "<< CONTROLLER REGION >>"
+  controller_username       = "<< CONTROLLER USERNAME >>"
+  controller_password       = "<< CONTROLLER PASSWORD >>"
+  controller_sg_name        = "<< CONTROLLER SG NAME >>"  
+  main_copilot_public_ip    = module.main.public_ip
+  main_copilot_private_ip   = module.main.private_ip
+  main_copilot_region       = module.main.region
+  main_copilot_username     = "<< CONTROLLER USERNAME >>"
+  main_copilot_password     = "<< CONTROLLER PASSWORD >>"
+  main_copilot_sg_name      = "AviatrixCopilotSecurityGroup"  
+  node_copilot_public_ips   = [module.node1.public_ip, module.node2.public_ip, module.node3.public_ip]
+  node_copilot_private_ips  = [module.node1.private_ip, module.node2.private_ip, module.node3.private_ip]
+  node_copilot_regions      = [module.node1.region, module.node2.region, module.node3.region]
+  node_copilot_usernames    = ["<< CONTROLLER USERNAME >>", "<< CONTROLLER USERNAME >>", "<< CONTROLLER USERNAME >>"]
+  node_copilot_passwords    = ["<< CONTROLLER PASSWORD >>", "<< CONTROLLER PASSWORD >>", "<< CONTROLLER PASSWORD >>"]
+  node_copilot_data_volumes = ["/dev/sdf", "/dev/sdf", "/dev/sdf"]
+  node_copilot_names        = ["node1", "node2", "node3"]
+  node_copilot_sg_names     = ["AviatrixCopilotSecurityGroup", "AviatrixCopilotSecurityGroup", "AviatrixCopilotSecurityGroup"]
+  private_mode              = true
+}
+
+output "main_public_ip" {
+  value = module.main.public_ip
+}
+output "main_private_ip" {
+  value = module.main.private_ip
+}
+output "node1_public_ip" {
+  value = module.node1.public_ip
+}
+output "node1_private_ip" {
+  value = module.node1.private_ip
+}
+output "node2_public_ip" {
+  value = module.node2.public_ip
+}
+output "node2_private_ip" {
+  value = module.node2.private_ip
+}
+output "node3_public_ip" {
+  value = module.node3.public_ip
+}
+output "node3_private_ip" {
+  value = module.node3.private_ip
+}
+
+// ************
+// ** Step 4 **
+// ************
+
+terraform {
+  required_providers {
+    aviatrix = {
+      source = "AviatrixSystems/aviatrix"
+      version = "2.23.0" // version 2.23+ is required
+    }
+  }
+}
+
+provider "aviatrix" {
+  username      = "<< CONTROLLER USERNAME >>"
+  password      = "<< CONTROLLER PASSWORD >>"
+  controller_ip = "<< CONTROLLER PUBLIC IP >>"
+}
+
+resource "aviatrix_remote_syslog" "copilot_remote_syslog" {
+  index    = 9
+  name     = "example"
+  server   = module.main.public_ip
+  port     = 5000
+  protocol = "TCP"
+}
+
+resource "aviatrix_netflow_agent" "copilot_netflow_agent" {
+  server_ip = module.main.public_ip
+  port      = 31283
 }
 ```
 
 ### Variables
 
-- **access_key** 
+- **aws_access_key**
   AWS access key.
 
-- **security_key**
-  AWS security key.
+- **aws_secret_access_key**
+  AWS secret access key.
 
 - **controller_public_ip**
   Controller public IP.
@@ -49,6 +487,9 @@ module "copilot_cluster_initialize" {
 
 - **controller_password**
   Controller password.
+
+- **controller_sg_name**
+  Controller security group name.
 
 - **main_copilot_public_ip**
   Main copilot public IP.
@@ -64,6 +505,9 @@ module "copilot_cluster_initialize" {
 
 - **main_copilot_password**
   Main copilot password.
+
+- **main_copilot_sg_name**
+  Main copilot security group name.
 
 - **node_copilot_public_ips**
   List of node copilot public IPs.
@@ -85,3 +529,9 @@ module "copilot_cluster_initialize" {
 
 - **node_copilot_names**
   List of node copilot names.
+
+- **node_copilot_sg_names**
+  List of node copilot security group names.
+
+- **private_mode**
+  Flag to indicate whether the copilot is for private mode. Default: false.
