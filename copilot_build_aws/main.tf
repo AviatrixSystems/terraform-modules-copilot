@@ -40,7 +40,7 @@ resource "aws_subnet" "copilot_subnet" {
   count             = var.use_existing_vpc == false ? 1 : 0
   vpc_id            = aws_vpc.copilot_vpc[0].id
   cidr_block        = var.subnet_cidr
-  availability_zone = local.default_az
+  availability_zone = local.availability_zone
   tags = {
     Name = "${local.name_prefix}copilot_subnet"
   }
@@ -135,11 +135,15 @@ resource "aws_network_interface" "eni-copilot" {
   }
 }
 
+data "aws_subnet" "subnet" {
+  id = var.use_existing_vpc == false ? aws_subnet.copilot_subnet[0].id : var.subnet_id
+}
+
 resource "aws_instance" "aviatrixcopilot" {
   ami               = local.ami_id
   instance_type     = local.instance_type
   key_name          = var.keypair
-  availability_zone = local.default_az
+  availability_zone = data.aws_subnet.subnet.availability_zone
 
   network_interface {
     network_interface_id = aws_network_interface.eni-copilot.id
@@ -158,7 +162,7 @@ resource "aws_instance" "aviatrixcopilot" {
 
 resource "aws_ebs_volume" "default" {
   count             = var.default_data_volume_name == "" ? 0 : 1
-  availability_zone = local.default_az
+  availability_zone = data.aws_subnet.subnet.availability_zone
   size              = var.default_data_volume_size
   tags = {
     Name = "${local.name_prefix}copilot_default_data_volume"
