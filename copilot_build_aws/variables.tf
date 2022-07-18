@@ -156,7 +156,7 @@ data "aws_ec2_instance_type_offering" "offering" {
 }
 
 locals {
-  name_prefix       = var.name_prefix != "" ? "${var.name_prefix}-" : ""
+  name_prefix       = var.name_prefix != "" ? "${var.name_prefix}_" : ""
   images_copilot    = jsondecode(data.http.copilot_iam_id.body).Copilot
   images_copilotarm = jsondecode(data.http.copilot_iam_id.body).CopilotARM
   ami_id            = var.type == "Copilot" ? local.images_copilot[data.aws_region.current.name] : local.images_copilotarm[data.aws_region.current.name]

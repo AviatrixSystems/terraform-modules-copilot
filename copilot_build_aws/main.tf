@@ -156,7 +156,7 @@ resource "aws_instance" "aviatrixcopilot" {
   }
 
   tags = merge(local.common_tags, {
-    Name = var.copilot_name != "" ? var.copilot_name : (var.type == "Copilot" ? "${local.name_prefix}AviatrixCopilot" : "${local.name_prefix}AviatrixCopilot-arm")
+    Name = var.copilot_name != "" ? var.copilot_name : (var.type == "Copilot" ? "${local.name_prefix}AviatrixCopilot" : "${local.name_prefix}AviatrixCopilot_ARM")
   })
 }
 

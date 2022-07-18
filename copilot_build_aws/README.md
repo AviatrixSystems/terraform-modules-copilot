@@ -139,6 +139,8 @@ output "copilot_public_ip" {
 
   Flag to indicate whether the copilot is for private mode. Default: false.
 
+> **NOTE:** If **private_mode** is set to true, **use_existing_vpc** is required to be true. Please make sure the private subnet where the copilot instance will be launched has internet access. There will be no public IP for the copilot instance in private mode.
+
 ### Outputs
 
 - **region**
