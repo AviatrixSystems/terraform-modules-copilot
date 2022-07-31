@@ -144,6 +144,11 @@ resource "aws_instance" "aviatrixcopilot" {
   instance_type     = local.instance_type
   key_name          = var.keypair
   availability_zone = data.aws_subnet.subnet.availability_zone
+  user_data = <<EOF
+#!/bin/bash
+jq '.config.controllerIp="${local.controller_ip}" | .config.controllerPublicIp="${local.controller_ip}" | .config.isCluster=${var.is_cluster}' /etc/copilot/db.json > /etc/copilot/db.json.tmp
+mv /etc/copilot/db.json.tmp /etc/copilot/db.json
+EOF
 
   network_interface {
     network_interface_id = aws_network_interface.eni-copilot.id

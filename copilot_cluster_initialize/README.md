@@ -35,9 +35,12 @@ provider "aws" {
 }
 
 module "main" {
-  source  = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
-  type    = "Copilot"
-  keypair = "copilot_kp" // "copilot_kp" is an example here
+  source                = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  type                  = "Copilot"
+  keypair               = "copilot_kp" // "copilot_kp" is an example here
+  is_cluster            = true
+  controller_public_ip  = "<< CONTROLLER PUBLIC IP >>"
+  controller_private_ip = "<< CONTROLLER PRIVATE IP >>"
   
   allowed_cidrs = {
     "tcp_cidrs" = {
@@ -117,6 +120,9 @@ module "node1" {
   use_existing_keypair     = true
   keypair                  = module.main.ec2-info[0].key_name
   default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here
+  is_cluster               = true
+  controller_public_ip     = "<< CONTROLLER PUBLIC IP >>"
+  controller_private_ip    = "<< CONTROLLER PRIVATE IP >>"
   
   allowed_cidrs = {
     "tcp_cidrs" = {
@@ -136,6 +142,9 @@ module "node2" {
   use_existing_keypair     = true
   keypair                  = module.main.ec2-info[0].key_name
   default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
+  is_cluster               = true
+  controller_public_ip     = "<< CONTROLLER PUBLIC IP >>"
+  controller_private_ip    = "<< CONTROLLER PRIVATE IP >>"
   
   allowed_cidrs = {
     "tcp_cidrs" = {
@@ -155,6 +164,9 @@ module "node3" {
   use_existing_keypair     = true
   keypair                  = module.main.ec2-info[0].key_name
   default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
+  is_cluster               = true
+  controller_public_ip     = "<< CONTROLLER PUBLIC IP >>"
+  controller_private_ip    = "<< CONTROLLER PRIVATE IP >>"
   
   allowed_cidrs = {
     "tcp_cidrs" = {
@@ -289,13 +301,15 @@ provider "aws" {
 }
 
 module "main" {
-  source           = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
-  type             = "Copilot"
-  use_existing_vpc = true
-  vpc_id           = "<< VPC ID >>"
-  subnet_id        = "<< SUBNET ID >>"
-  keypair          = "copilot_kp" // "copilot_kp" is an example here  
-  private_mode     = true
+  source                = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  type                  = "Copilot"
+  use_existing_vpc      = true
+  vpc_id                = "<< VPC ID >>"
+  subnet_id             = "<< SUBNET ID >>"
+  keypair               = "copilot_kp" // "copilot_kp" is an example here  
+  private_mode          = true
+  is_cluster            = true
+  controller_private_ip = "<< CONTROLLER PRIVATE IP >>"
     
   allowed_cidrs = {
     "tcp_cidrs_1" = {
@@ -330,6 +344,8 @@ module "node1" {
   keypair                  = module.main.ec2-info[0].key_name
   default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
   private_mode             = true
+  is_cluster               = true
+  controller_private_ip    = "<< CONTROLLER PRIVATE IP >>"
     
   allowed_cidrs = {
     "tcp_cidrs" = {
@@ -350,6 +366,8 @@ module "node2" {
   keypair                  = module.main.ec2-info[0].key_name
   default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
   private_mode             = true
+  is_cluster               = true
+  controller_private_ip    = "<< CONTROLLER PRIVATE IP >>"
   
   allowed_cidrs = {
     "tcp_cidrs" = {
@@ -370,6 +388,8 @@ module "node3" {
   keypair                  = module.main.ec2-info[0].key_name
   default_data_volume_name = "/dev/sdf" // "/dev/sdf" is an example here  
   private_mode             = true
+  is_cluster               = true
+  controller_private_ip    = "<< CONTROLLER PRIVATE IP >>"
   
   allowed_cidrs = {
     "tcp_cidrs" = {
@@ -388,18 +408,16 @@ module "init" {
   source                    = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_cluster_initialize"
   aws_access_key            = "<< AWS ACCESS KEY >>"
   aws_secret_access_key     = "<< AWS SECRET ACCESS KEY>>"
-  controller_public_ip      = "<< CONTROLLER PUBLIC IP >>"
+  controller_private_ip     = "<< CONTROLLER PRIVATE IP >>"  
   controller_region         = "<< CONTROLLER REGION >>"
   controller_username       = "<< CONTROLLER USERNAME >>"
   controller_password       = "<< CONTROLLER PASSWORD >>"
   controller_sg_name        = "<< CONTROLLER SG NAME >>"  
-  main_copilot_public_ip    = module.main.public_ip
   main_copilot_private_ip   = module.main.private_ip
   main_copilot_region       = module.main.region
   main_copilot_username     = "<< CONTROLLER USERNAME >>"
   main_copilot_password     = "<< CONTROLLER PASSWORD >>"
   main_copilot_sg_name      = "AviatrixCopilotSecurityGroup"  
-  node_copilot_public_ips   = [module.node1.public_ip, module.node2.public_ip, module.node3.public_ip]
   node_copilot_private_ips  = [module.node1.private_ip, module.node2.private_ip, module.node3.private_ip]
   node_copilot_regions      = [module.node1.region, module.node2.region, module.node3.region]
   node_copilot_usernames    = ["<< CONTROLLER USERNAME >>", "<< CONTROLLER USERNAME >>", "<< CONTROLLER USERNAME >>"]
@@ -477,7 +495,12 @@ resource "aviatrix_netflow_agent" "copilot_netflow_agent" {
   AWS secret access key.
 
 - **controller_public_ip**
-  Controller public IP.
+  Controller public IP. Default: "0.0.0.0".
+
+> **NOTE:** A valid **controller_public_ip** is required when **private_mode** is false.
+
+- **controller_private_ip**
+  Controller private IP.
 
 - **controller_region**
   controller region.
@@ -492,7 +515,9 @@ resource "aviatrix_netflow_agent" "copilot_netflow_agent" {
   Controller security group name.
 
 - **main_copilot_public_ip**
-  Main copilot public IP.
+  Main copilot public IP. Default: "0.0.0.0".
+
+> **NOTE:** A valid **main_copilot_public_ip** is required when **private_mode** is false.
 
 - **main_copilot_private_ip**
   Main copilot private IP.
@@ -510,7 +535,9 @@ resource "aviatrix_netflow_agent" "copilot_netflow_agent" {
   Main copilot security group name.
 
 - **node_copilot_public_ips**
-  List of node copilot public IPs.
+  List of node copilot public IPs. Default: ["0.0.0.0"].
+
+> **NOTE:** Valid **node_copilot_public_ips** are required when **private_mode** is false.
 
 - **node_copilot_private_ips**
   List of node copilot private IPs.

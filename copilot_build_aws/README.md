@@ -11,8 +11,10 @@ provider "aws" {
 }
 
 module "copilot_build_aws" {
-  source  = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
-  keypair = "copilot_kp"
+  source                = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  keypair               = "copilot_kp"
+  controller_public_ip  = "<< CONTROLLER PUBLIC IP >>"
+  controller_private_ip = "<< CONTROLLER PRIVATE IP >>"
   
   allowed_cidrs = {
     "tcp_cidrs" = {
@@ -67,11 +69,11 @@ output "copilot_public_ip" {
 
   Subnet in which you want launch Aviatrix Copilot. Default: "10.0.1.0/24".
 
-> **NOTE:** If **use_existing_vpc** is set to true, **vpc_id** and **subnet_id** are required. Make sure that resources `aws_vpc`, `aws_internet_gateway`, `aws_route_table`, `aws_route`, `aws_subnet` and `aws_route_table_association` are configured properly.
-
 - **use_existing_vpc**
 
   Flag to indicate whether to use an existing VPC. Default: false.
+
+> **NOTE:** If **use_existing_vpc** is set to true, **vpc_id** and **subnet_id** are required. Make sure the subnet has internet access.
 
 - **vpc_id**
 
@@ -81,11 +83,11 @@ output "copilot_public_ip" {
 
   Subnet ID. Only required when use_existing_vpc is true. Default: "".
 
-> **NOTE:** If **use_existing_keypair** is set to false, a key pair with name of **keypair** will be generated. If **use_existing_keypair** is set to true, Copilot will use **keypair** directly.
-
 - **use_existing_keypair**
 
   Flag to indicate whether to use an existing key pair. Default: false.
+
+> **NOTE:** If **use_existing_keypair** is set to false, a key pair with name of **keypair** will be generated. If **use_existing_keypair** is set to true, Copilot will use **keypair** directly.
 
 - **keypair**
 
@@ -141,7 +143,29 @@ output "copilot_public_ip" {
 
 > **NOTE:** If **private_mode** is set to true, **use_existing_vpc** is required to be true. Please make sure the private subnet where the copilot instance will be launched has internet access. There will be no public IP for the copilot instance in private mode.
 
+- **private_mode**
+
+  Flag to indicate whether the copilot is for private mode. Default: false.
+
+- **is_cluster**
+
+  Flag to indicate whether the copilot is for cluster deployment. Default: false.
+
+- **controller_public_ip**
+
+  Controller public IP. Default: "0.0.0.0".
+
+> **NOTE:** A valid **controller_public_ip** is required when **private_mode** is false.
+
+- **controller_private_ip**
+
+  Controller private IP.
+
 ### Outputs
+
+- **ec2-info**
+
+  EC2 instance information.
 
 - **region**
 
