@@ -85,9 +85,9 @@ variable "default_data_disk_size" {
 }
 
 variable "additional_disks" {
-  type    = set(string)
-  default = []
-
+  type        = set(string)
+  description = "A set of additional disks' `name` or `self_link` that will be attached to the copilot instance"
+  default     = []
 }
 
 variable "boot_disk_size" {
@@ -99,6 +99,12 @@ variable "boot_disk_size" {
     condition     = var.boot_disk_size >= 30
     error_message = "The minimum boot disk volume size is 30G."
   }
+}
+
+variable "network_tags" {
+  type        = set(string)
+  description = "Compute instance network tags"
+  default     = ["copilot"]
 }
 
 locals {
