@@ -79,9 +79,15 @@ variable "ssh_public_key_file_content" {
 }
 
 variable "default_data_disk_size" {
-  default     = 0
   type        = number
   description = "Size of default data disk. If not set, no default data disk will be created."
+  default     = 0
+}
+
+variable "default_data_disk_name" {
+  type        = string
+  description = "Name of default data disk. If default data disk is not created, this variable will be ignored."
+  default     = "default-data-disk"
 }
 
 variable "additional_disks" {
