@@ -71,7 +71,7 @@ resource "google_compute_firewall" "copilot_firewall" {
 
 resource "google_compute_disk" "default" {
   count = var.default_data_disk_size == 0 ? 0 : 1
-  name  = "default-data-disk"
+  name  = var.default_data_disk_name
   size  = var.default_data_disk_size
 }
 

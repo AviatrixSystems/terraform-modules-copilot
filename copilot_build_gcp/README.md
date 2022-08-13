@@ -107,6 +107,10 @@ output "copilot_private_ip" {
 
   Size of default data disk. If not set, no default data disk will be created. Default: 0.
 
+- **default_data_disk_name**
+
+  Name of default data disk. If default data disk is not created, this variable will be ignored. Default: "default-data-disk".
+
 - **additional_disks**
 
   A set of additional disks' `name` or `self_link` that will be attached to the copilot instance. Please refer to this [link](https://cloud.google.com/compute/docs/disks/add-persistent-disk) for instructions on how to create a disk. If not set, defaults to [].
