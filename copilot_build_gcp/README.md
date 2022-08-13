@@ -111,6 +111,10 @@ output "copilot_private_ip" {
 
   A set of additional disks' `name` or `self_link` that will be attached to the copilot instance. Please refer to this [link](https://cloud.google.com/compute/docs/disks/add-persistent-disk) for instructions on how to create a disk. If not set, defaults to [].
 
+- **network_tags**
+
+  A set of compute instance network tags. Default: ["copilot"].
+
 ### Outputs
 
 - **private_ip**

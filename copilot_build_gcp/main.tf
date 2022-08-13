@@ -25,6 +25,7 @@ resource "tls_private_key" "key_pair_material" {
 resource "google_compute_instance" "copilot" {
   name         = var.copilot_name
   machine_type = var.copilot_machine_type
+  tags         = var.network_tags
 
   boot_disk {
     initialize_params {
@@ -60,6 +61,7 @@ resource "google_compute_firewall" "copilot_firewall" {
   network       = var.use_existing_network == false ? google_compute_network.copilot_network[0].self_link : var.network
   for_each      = var.allowed_cidrs
   source_ranges = each.value["cidrs"]
+  target_tags   = var.network_tags
 
   allow {
     protocol = each.value["protocol"]
