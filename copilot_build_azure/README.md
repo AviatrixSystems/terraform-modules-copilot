@@ -20,13 +20,13 @@ module "copilot_build_azure" {
   allowed_cidrs = {
     "tcp_cidrs" = {
       priority = "100"
-      protocol = "tcp"
+      protocol = "Tcp"
       ports    = ["443"]
       cidrs    = ["<< CIDR_1 >>", "<< CIDR_2 >>", ...]
     }
     "udp_cidrs" = {
       priority = "200"
-      protocol = "udp"
+      protocol = "Udp"
       ports    = ["5000", "31283"]
       cidrs    = ["<< CIDR_1 >>", "<< CIDR_2 >>", ...]
     }
@@ -134,6 +134,26 @@ output "copilot_private_ip" {
 - **additional_disks**
 
   Map of additional disks that will be attached to the copilot vm. Please set managed_disk_id(string) and lun(string) in each map element. Please see the example code above for example.
+
+- **private_mode**
+
+  Flag to indicate whether the copilot is for private mode. Default: false.
+
+> **NOTE:** If **private_mode** is set to true, **use_existing_vpc** is required to be true. Please make sure the private subnet where the copilot instance will be launched has internet access. There will be no public IP for the copilot instance in private mode.
+
+- **is_cluster**
+
+  Flag to indicate whether the copilot is for cluster deployment. Default: false.
+
+- **controller_public_ip**
+
+  Controller public IP. Default: "0.0.0.0".
+
+> **NOTE:** A valid **controller_public_ip** is required when **private_mode** is false.
+
+- **controller_private_ip**
+
+  Controller private IP.
 
 ### Outputs
 

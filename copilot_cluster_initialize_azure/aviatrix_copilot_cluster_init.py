@@ -5,9 +5,12 @@ import time
 import traceback
 import requests
 import uuid
-import boto3
 from multiprocessing import Process
-from botocore.exceptions import ClientError
+
+from azure.core.exceptions import HttpResponseError
+from azure.identity import ClientSecretCredential
+from azure.mgmt.network import NetworkManagementClient
+from azure.mgmt.network.v2022_01_01.models import SecurityRuleAccess, SecurityRuleDirection, SecurityRuleProtocol
 
 
 class AviatrixException(Exception):
@@ -16,39 +19,36 @@ class AviatrixException(Exception):
 
 
 def add_ingress_rules(
-        aws_access_key,
-        aws_secret_access_key,
-        private_ip,
-        region,
-        rules,
-        sg_name
+        subscription_id,
+        client_id,
+        client_secret,
+        tenant_id,
+        resource_group_name,
+        network_security_group_name,
+        security_rule_name,
+        security_rule_parameters
 ):
-    ec2 = boto3.client('ec2', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_access_key,
-                       region_name=region)
+    subscription_id = subscription_id
+    credentials = ClientSecretCredential(
+        client_id=client_id,
+        client_secret=client_secret,
+        tenant_id=tenant_id
+    )
 
-    filters = [{
-        'Name': 'private-ip-address',
-        'Values': [private_ip],
-    }]
-
-    instance = ec2.describe_instances(Filters=filters)
-    security_groups = instance['Reservations'][0]['Instances'][0]['SecurityGroups']
-
-    security_group_id = ''
-    for sg in security_groups:
-        if sg_name in sg['GroupName']:
-            security_group_id = sg['GroupId']
-    if not security_group_id:
-        raise AviatrixException(
-            message="Could not get the security group ID.",
-        )
+    network_client = NetworkManagementClient(
+        credentials,
+        subscription_id
+    )
 
     try:
-        response = ec2.authorize_security_group_ingress(
-            GroupId=security_group_id,
-            IpPermissions=rules)
-    except ClientError:
-        logging.info('Could not create ingress security group rule.')
+        response = network_client.security_rules.begin_create_or_update(
+            resource_group_name,
+            network_security_group_name,
+            security_rule_name,
+            security_rule_parameters
+        )
+    except HttpResponseError:
+        logging.info('Could not add ingress security group rule.')
         raise
     else:
         return response
@@ -263,9 +263,9 @@ def init_copilot_cluster(
     }
 
     cluster_db = []
-    for private_ip, volume, name in init_info:
+    for private_ip, name in init_info:
         cluster = {
-            "physicalVolumes": [volume],
+            "physicalVolumes": [],
             "clusterNodeName": name,
             "clusterNodeEIP": private_ip,
             "clusterNodeInterIp": private_ip,
@@ -333,34 +333,40 @@ def get_copilot_init_status(
 
 
 def function_handler(event):
-    aws_access_key = event["aws_access_key"]
-    aws_secret_access_key = event["aws_secret_access_key"]
+    subscription_id = event["subscription_id"]
+    client_id = event["client_id"]
+    client_secret = event["client_secret"]
+    tenant_id = event["tenant_id"]
 
     controller_public_ip = event["controller_public_ip"]
     controller_private_ip = event["controller_private_ip"]
-    controller_region = event["controller_region"]
     controller_username = event["controller_username"]
     controller_password = event["controller_password"]
+    controller_resource_group_name = event["controller_resource_group_name"]
+    controller_network_security_group_name = event["controller_network_security_group_name"]
+    controller_security_rule_name = event["controller_security_rule_name"]
+    controller_security_rule_priority = event["controller_security_rule_priority"]
+
+    copilot_cluster_resource_group_name = event["copilot_cluster_resource_group_name"]
 
     main_copilot_public_ip = event["main_copilot_public_ip"]
     main_copilot_private_ip = event["main_copilot_private_ip"]
-    main_copilot_region = event["main_copilot_region"]
     main_copilot_username = event["main_copilot_username"]
     main_copilot_password = event["main_copilot_password"]
+    main_copilot_network_security_group_name = event["main_copilot_network_security_group_name"]
+    main_copilot_security_rule_name = event["main_copilot_security_rule_name"]
+    main_copilot_security_rule_priority = event["main_copilot_security_rule_priority"]
 
     node_copilot_public_ips = event["node_copilot_public_ips"]
     node_copilot_private_ips = event["node_copilot_private_ips"]
-    node_copilot_regions = event["node_copilot_regions"]
     node_copilot_usernames = event["node_copilot_usernames"]
     node_copilot_passwords = event["node_copilot_passwords"]
-    node_copilot_data_volumes = event["node_copilot_data_volumes"]
     node_copilot_names = event["node_copilot_names"]
+    node_copilot_network_security_group_names = event["node_copilot_network_security_group_names"]
+    node_copilot_security_rule_names = event["node_copilot_security_rule_names"]
+    node_copilot_security_rule_priorities = event["node_copilot_security_rule_priorities"]
 
     private_mode = event["private_mode"]
-
-    controller_sg_name = event["controller_sg_name"]
-    main_copilot_sg_name = event["main_copilot_sg_name"]
-    node_copilot_sg_names = event["node_copilot_sg_names"]
 
     controller_login_ip = controller_private_ip if private_mode else controller_public_ip
     main_copilot_login_ip = main_copilot_private_ip if private_mode else main_copilot_public_ip
@@ -372,12 +378,13 @@ def function_handler(event):
             [main_copilot_username] + node_copilot_usernames,
             [main_copilot_password] + node_copilot_passwords)
 
-    init_info = zip(node_copilot_private_ips, node_copilot_data_volumes, node_copilot_names)
+    init_info = zip(node_copilot_private_ips, node_copilot_names)
 
     all_copilot_public_ips = [main_copilot_public_ip] + node_copilot_public_ips
     all_copilot_private_ips = [main_copilot_private_ip] + node_copilot_private_ips
-    all_copilot_regions = [main_copilot_region] + node_copilot_regions
-    all_copilot_sg_names = [main_copilot_sg_name] + node_copilot_sg_names
+    all_copilot_network_security_group_names = [main_copilot_network_security_group_name] + node_copilot_network_security_group_names
+    all_copilot_security_rule_names = [main_copilot_security_rule_name] + node_copilot_security_rule_names
+    all_copilot_security_rule_priorities = [main_copilot_security_rule_priority] + node_copilot_security_rule_priorities
 
     ###########################################################
     # Step 1: Sleep 10 min for copilot instances to get ready #
@@ -394,168 +401,74 @@ def function_handler(event):
     logging.info("STEP 2 START: Modify the security groups for controller and copilot instances.")
 
     # modify controller security rule
-
-    controller_rules = []
+    controller_allowed_cidrs = []
 
     if private_mode:
         for ip in all_copilot_private_ips:
-            controller_rules.append(
-                {
-                    "IpProtocol": "tcp",
-                    "FromPort": 443,
-                    "ToPort": 443,
-                    "IpRanges": [{
-                        "CidrIp": ip + "/32"
-                    }]
-                }
-            )
-
-        add_ingress_rules(
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            private_ip=controller_private_ip,
-            region=controller_region,
-            rules=controller_rules,
-            sg_name=controller_sg_name
-        )
+            controller_allowed_cidrs.append(ip + "/32")
     else:
         for ip in all_copilot_public_ips:
-            controller_rules.append(
-                {
-                    "IpProtocol": "tcp",
-                    "FromPort": 443,
-                    "ToPort": 443,
-                    "IpRanges": [{
-                        "CidrIp": ip + "/32"
-                    }]
-                }
-            )
+            controller_allowed_cidrs.append(ip + "/32")
 
-        add_ingress_rules(
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            private_ip=controller_private_ip,
-            region=controller_region,
-            rules=controller_rules,
-            sg_name=controller_sg_name
-        )
+    controller_security_rule_parameters = {
+        'access': SecurityRuleAccess.allow,
+        'description': 'security rule for copilot cluster deployment',
+        'destination_address_prefix': '*',
+        'destination_port_range': '443',
+        'direction': SecurityRuleDirection.inbound,
+        'priority': controller_security_rule_priority,
+        'protocol': SecurityRuleProtocol.tcp,
+        'source_address_prefixes': controller_allowed_cidrs,
+        'source_port_range': '*',
+    }
 
-    # logging.info(controller_rules)
+    add_ingress_rules(
+        subscription_id=subscription_id,
+        client_id=client_id,
+        client_secret=client_secret,
+        tenant_id=tenant_id,
+        resource_group_name=controller_resource_group_name,
+        network_security_group_name=controller_network_security_group_name,
+        security_rule_name=controller_security_rule_name,
+        security_rule_parameters=controller_security_rule_parameters
+    )
 
     # modify copilot security rule
-
-    copilot_rules = []
+    copilot_allowed_cidrs = []
 
     if private_mode:
         for ip in all_copilot_private_ips:
-            copilot_rules.extend(
-                [
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 443,
-                        "ToPort": 443,
-                        "IpRanges": [{
-                            "CidrIp": ip + "/32"
-                        }]
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 9200,
-                        "ToPort": 9200,
-                        "IpRanges": [{
-                            "CidrIp": ip + "/32"
-                        }]
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 9300,
-                        "ToPort": 9300,
-                        "IpRanges": [{
-                            "CidrIp": ip + "/32"
-                        }]
-                    }
-                ]
-            )
-
-        for i in range(len(all_copilot_private_ips)):
-            add_ingress_rules(
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                private_ip=all_copilot_private_ips[i],
-                region=all_copilot_regions[i],
-                rules=copilot_rules,
-                sg_name=all_copilot_sg_names[i]
-            )
+            copilot_allowed_cidrs.append(ip + "/32")
     else:
         for ip in all_copilot_public_ips:
-            copilot_rules.extend(
-                [
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 443,
-                        "ToPort": 443,
-                        "IpRanges": [{
-                            "CidrIp": ip + "/32"
-                        }]
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 9200,
-                        "ToPort": 9200,
-                        "IpRanges": [{
-                            "CidrIp": ip + "/32"
-                        }]
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 9300,
-                        "ToPort": 9300,
-                        "IpRanges": [{
-                            "CidrIp": ip + "/32"
-                        }]
-                    }
-                ]
-            )
+            copilot_allowed_cidrs.append(ip + "/32")
 
         for ip in all_copilot_private_ips:
-            copilot_rules.extend(
-                [
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 443,
-                        "ToPort": 443,
-                        "IpRanges": [{
-                            "CidrIp": ip + "/32"
-                        }]
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 9200,
-                        "ToPort": 9200,
-                        "IpRanges": [{
-                            "CidrIp": ip + "/32"
-                        }]
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 9300,
-                        "ToPort": 9300,
-                        "IpRanges": [{
-                            "CidrIp": ip + "/32"
-                        }]
-                    }
-                ]
-            )
+            copilot_allowed_cidrs.append(ip + "/32")
 
-        for i in range(len(all_copilot_public_ips)):
-            add_ingress_rules(
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                private_ip=all_copilot_private_ips[i],
-                region=all_copilot_regions[i],
-                rules=copilot_rules,
-                sg_name=all_copilot_sg_names[i]
-            )
+    for i in range(len(all_copilot_network_security_group_names)):
+        copilot_security_rule_parameters = {
+            'access': SecurityRuleAccess.allow,
+            'description': 'security rule for copilot cluster deployment',
+            'destination_address_prefix': '*',
+            'destination_port_ranges': ['443', '9200', '9300'],
+            'direction': SecurityRuleDirection.inbound,
+            'priority': all_copilot_security_rule_priorities[i],
+            'protocol': SecurityRuleProtocol.tcp,
+            'source_address_prefixes': copilot_allowed_cidrs,
+            'source_port_range': '*',
+        }
+
+        add_ingress_rules(
+            subscription_id=subscription_id,
+            client_id=client_id,
+            client_secret=client_secret,
+            tenant_id=tenant_id,
+            resource_group_name=copilot_cluster_resource_group_name,
+            network_security_group_name=all_copilot_network_security_group_names[i],
+            security_rule_name=all_copilot_security_rule_names[i],
+            security_rule_parameters=copilot_security_rule_parameters
+        )
 
     # logging.info(copilot_rules)
 
@@ -634,8 +547,8 @@ def function_handler(event):
         )
 
         py_dict = response.json()
-        api_return_msg = py_dict["status"]
-        logging.info(py_dict["message"])
+        api_return_msg = py_dict.get("status")
+        logging.info(py_dict.get("message"))
 
         if api_return_msg == "failed":
             raise AviatrixException(message="Initialization failed.")
@@ -663,76 +576,94 @@ if __name__ == '__main__':
     )
 
     i = 1
-    aws_access_key = sys.argv[i]
+    subscription_id = sys.argv[i]
     i += 1
-    aws_secret_access_key = sys.argv[i]
+    client_id = sys.argv[i]
+    i += 1
+    client_secret = sys.argv[i]
+    i += 1
+    tenant_id = sys.argv[i]
     i += 1
     controller_public_ip = sys.argv[i]
     i += 1
     controller_private_ip = sys.argv[i]
     i += 1
-    controller_region = sys.argv[i]
-    i += 1
     controller_username = sys.argv[i]
     i += 1
     controller_password = sys.argv[i]
+    i += 1
+    controller_resource_group_name = sys.argv[i]
+    i += 1
+    controller_network_security_group_name = sys.argv[i]
+    i += 1
+    controller_security_rule_name = sys.argv[i]
+    i += 1
+    controller_security_rule_priority = sys.argv[i]
+    i += 1
+    copilot_cluster_resource_group_name = sys.argv[i]
     i += 1
     main_copilot_public_ip = sys.argv[i]
     i += 1
     main_copilot_private_ip = sys.argv[i]
     i += 1
-    main_copilot_region = sys.argv[i]
-    i += 1
     main_copilot_username = sys.argv[i]
     i += 1
     main_copilot_password = sys.argv[i]
+    i += 1
+    main_copilot_network_security_group_name = sys.argv[i]
+    i += 1
+    main_copilot_security_rule_name = sys.argv[i]
+    i += 1
+    main_copilot_security_rule_priority = sys.argv[i]
     i += 1
     node_copilot_public_ips = sys.argv[i].split(",")
     i += 1
     node_copilot_private_ips = sys.argv[i].split(",")
     i += 1
-    node_copilot_regions = sys.argv[i].split(",")
-    i += 1
     node_copilot_usernames = sys.argv[i].split(",")
     i += 1
     node_copilot_passwords = sys.argv[i].split(",")
     i += 1
-    node_copilot_data_volumes = sys.argv[i].split(",")
-    i += 1
     node_copilot_names = sys.argv[i].split(",")
     i += 1
+    node_copilot_network_security_group_names = sys.argv[i].split(",")
+    i += 1
+    node_copilot_security_rule_names = sys.argv[i].split(",")
+    i += 1
+    node_copilot_security_rule_priorities = sys.argv[i].split(",")
+    i += 1
     private_mode = sys.argv[i]
-    i += 1
-    controller_sg_name = sys.argv[i]
-    i += 1
-    main_copilot_sg_name = sys.argv[i]
-    i += 1
-    node_copilot_sg_names = sys.argv[i].split(",")
 
     event = {
-        "aws_access_key": aws_access_key,
-        "aws_secret_access_key": aws_secret_access_key,
+        "subscription_id": subscription_id,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "tenant_id": tenant_id,
         "controller_public_ip": controller_public_ip,
         "controller_private_ip": controller_private_ip,
-        "controller_region": controller_region,
         "controller_username": controller_username,
         "controller_password": controller_password,
+        "controller_resource_group_name": controller_resource_group_name,
+        "controller_network_security_group_name": controller_network_security_group_name,
+        "controller_security_rule_name": controller_security_rule_name,
+        "controller_security_rule_priority": controller_security_rule_priority,
+        "copilot_cluster_resource_group_name": copilot_cluster_resource_group_name,
         "main_copilot_public_ip": main_copilot_public_ip,
         "main_copilot_private_ip": main_copilot_private_ip,
-        "main_copilot_region": main_copilot_region,
         "main_copilot_username": main_copilot_username,
         "main_copilot_password": main_copilot_password,
+        "main_copilot_network_security_group_name": main_copilot_network_security_group_name,
+        "main_copilot_security_rule_name": main_copilot_security_rule_name,
+        "main_copilot_security_rule_priority": main_copilot_security_rule_priority,
         "node_copilot_public_ips": node_copilot_public_ips,
         "node_copilot_private_ips": node_copilot_private_ips,
-        "node_copilot_regions": node_copilot_regions,
         "node_copilot_usernames": node_copilot_usernames,
         "node_copilot_passwords": node_copilot_passwords,
-        "node_copilot_data_volumes": node_copilot_data_volumes,
         "node_copilot_names": node_copilot_names,
+        "node_copilot_network_security_group_names": node_copilot_network_security_group_names,
+        "node_copilot_security_rule_names": node_copilot_security_rule_names,
+        "node_copilot_security_rule_priorities": node_copilot_security_rule_priorities,
         "private_mode": True if private_mode == "true" else False,
-        "controller_sg_name": controller_sg_name,
-        "main_copilot_sg_name": main_copilot_sg_name,
-        "node_copilot_sg_names": node_copilot_sg_names
     }
 
     try:

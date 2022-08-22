@@ -12,13 +12,13 @@ variable "copilot_name" {
 variable "vnet_cidr" {
   type        = string
   description = "CIDR for copilot VNET"
-  default     = "10.0.0.0/24"
+  default     = "10.0.0.0/16"
 }
 
 variable "subnet_cidr" {
   type        = string
   description = "CIDR for copilot subnet"
-  default     = "10.0.0.0/24"
+  default     = "10.0.1.0/24"
 }
 
 variable "use_existing_vnet" {
@@ -106,6 +106,12 @@ variable "os_disk_size" {
   }
 }
 
+variable "default_data_disk_name" {
+  type        = string
+  description = "Name of default data disk."
+  default     = "default-data-disk"
+}
+
 variable "default_data_disk_size" {
   default     = 0
   type        = number
@@ -120,6 +126,35 @@ variable "additional_disks" {
   }))
 }
 
+variable "private_mode" {
+  type        = bool
+  description = "Flag to indicate whether the copilot is for private mode"
+  default     = false
+}
+
+variable "is_cluster" {
+  type        = bool
+  description = "Flag to indicate whether the copilot is for a cluster"
+  default     = false
+}
+
+variable "controller_public_ip" {
+  type        = string
+  description = "Controller public IP"
+  default     = "0.0.0.0"
+}
+
+variable "controller_private_ip" {
+  type        = string
+  description = "Controller private IP"
+}
+
 locals {
-  ssh_key = var.add_ssh_key ? (var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : (var.ssh_public_key_file_path != "" ? file(var.ssh_public_key_file_path) : var.ssh_public_key_file_content)) : ""
+  ssh_key       = var.add_ssh_key ? (var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : (var.ssh_public_key_file_path != "" ? file(var.ssh_public_key_file_path) : var.ssh_public_key_file_content)) : ""
+  controller_ip = var.private_mode ? var.controller_private_ip : var.controller_public_ip
+  custom_data = <<EOF
+#!/bin/bash
+jq '.config.controllerIp="${local.controller_ip}" | .config.controllerPublicIp="${local.controller_ip}" | .config.isCluster=${var.is_cluster}' /etc/copilot/db.json > /etc/copilot/db.json.tmp
+mv /etc/copilot/db.json.tmp /etc/copilot/db.json
+EOF
 }
