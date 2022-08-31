@@ -1,8 +1,8 @@
-## Aviatrix - Terraform Modules Copilot - Copilot Cluster Initialize
+## Aviatrix - Terraform Modules Copilot - AWS Copilot Cluster Initialize
 
 ### Description
 
-This Terraform module initializes a newly created Aviatrix Copilot Cluster. This module currently only supports AWS.
+This Terraform module initializes a newly created Aviatrix Copilot Cluster. This module assumes that the controller, main copilot and copilot nodes are all deployed on AWS.
 
 ### Example of Launching Copilot Instances and Initializing the Cluster
 
@@ -13,7 +13,7 @@ This Terraform module initializes a newly created Aviatrix Copilot Cluster. This
 **In this case, controller and copilot cluster can be in different VPCs.** In the following example:
 1. A main copilot instance is launched using the [copilot_build_aws](../copilot_build_aws) module.
 2. In the same VPC where the main copilot is, three node copilot instances are launched using the [copilot_build_aws](../copilot_build_aws) module.
-3. The copilot cluster is initialized using the [copilot_cluster_initialize](../copilot_cluster_initialize) module.
+3. The copilot cluster is initialized using the [copilot_cluster_initialize_aws](../copilot_cluster_initialize) module.
 4. Some settings in the controller are configured using the [Aviatrix Terraform provider](https://registry.terraform.io/providers/AviatrixSystems/aviatrix/2.23.0).
 
 > **NOTE:** 
@@ -287,7 +287,7 @@ In the following example:
 > 1. After the cluster has been successfully initialized, the following settings need to be configured in the Aviatrix controller. This is the reason for the step 4 above.
 > * Enable syslog configuration for main copilot
 > * Enable netflow configuration for main copilot
-> 2. After deployment, the main copilot ports 31283 and 5000 will be open for any IP (0.0.0.0/0). It is strongly recommended to remove the 0.0.0.0 entry from the CoPilot security group for these ports and add entries for all of your gateway IP addresses.
+> 2. After deployment, the main copilot ports 31283 and 5000 will be open for any IP (0.0.0.0/0). It is strongly recommended removing the 0.0.0.0 entry from the CoPilot security group for these ports and add entries for all of your gateway IP addresses.
 
 ``` hcl
 // ************
@@ -428,27 +428,18 @@ module "init" {
   private_mode              = true
 }
 
-output "main_public_ip" {
-  value = module.main.public_ip
-}
 output "main_private_ip" {
   value = module.main.private_ip
 }
-output "node1_public_ip" {
-  value = module.node1.public_ip
-}
+
 output "node1_private_ip" {
   value = module.node1.private_ip
 }
-output "node2_public_ip" {
-  value = module.node2.public_ip
-}
+
 output "node2_private_ip" {
   value = module.node2.private_ip
 }
-output "node3_public_ip" {
-  value = module.node3.public_ip
-}
+
 output "node3_private_ip" {
   value = module.node3.private_ip
 }

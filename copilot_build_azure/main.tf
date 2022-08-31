@@ -21,6 +21,7 @@ resource "azurerm_subnet" "aviatrix_copilot_subnet" {
 }
 
 resource "azurerm_public_ip" "aviatrix_copilot_public_ip" {
+  count               = var.private_mode ? 0 : 1
   allocation_method   = "Static"
   location            = var.location
   name                = "${var.copilot_name}-public-ip"
@@ -52,11 +53,12 @@ resource "azurerm_network_interface" "aviatrix_copilot_nic" {
   location            = var.location
   name                = "${var.copilot_name}-network-interface-card"
   resource_group_name = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
+
   ip_configuration {
     name                          = "${var.copilot_name}-nic"
     private_ip_address_allocation = "Dynamic"
     subnet_id                     = var.use_existing_vnet == false ? azurerm_subnet.aviatrix_copilot_subnet[0].id : var.subnet_id
-    public_ip_address_id          = azurerm_public_ip.aviatrix_copilot_public_ip.id
+    public_ip_address_id          = var.private_mode ? "" : azurerm_public_ip.aviatrix_copilot_public_ip[0].id
   }
 }
 
@@ -81,6 +83,7 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
   network_interface_ids           = [azurerm_network_interface.aviatrix_copilot_nic.id]
   resource_group_name             = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
   size                            = var.virtual_machine_size
+  custom_data = base64encode(local.custom_data)
 
   os_disk {
     name                 = var.os_disk_name
@@ -104,13 +107,14 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
 }
 
 resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm_ssh" {
-  count                           = var.add_ssh_key ? 1 : 0
-  admin_username                  = var.virtual_machine_admin_username
-  name                            = "${var.copilot_name}-vm"
-  location                        = var.location
-  network_interface_ids           = [azurerm_network_interface.aviatrix_copilot_nic.id]
-  resource_group_name             = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
-  size                            = var.virtual_machine_size
+  count                 = var.add_ssh_key ? 1 : 0
+  admin_username        = var.virtual_machine_admin_username
+  name                  = "${var.copilot_name}-vm"
+  location              = var.location
+  network_interface_ids = [azurerm_network_interface.aviatrix_copilot_nic.id]
+  resource_group_name   = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
+  size                  = var.virtual_machine_size
+  custom_data           = base64encode(local.custom_data)
 
   os_disk {
     name                 = var.os_disk_name
@@ -138,11 +142,15 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm_ssh" {
   }
 }
 
+data "azurerm_resource_group" "rg" {
+  name = var.use_existing_vnet ? var.resource_group_name : azurerm_resource_group.aviatrix_copilot_rg[0].name
+}
+
 resource "azurerm_managed_disk" "default" {
   count                = var.default_data_disk_size == 0 ? 0 : 1
-  name                 = "default-data-disk"
-  location             = azurerm_resource_group.aviatrix_copilot_rg[0].location
-  resource_group_name  = azurerm_resource_group.aviatrix_copilot_rg[0].name
+  name                 = var.default_data_disk_name
+  location             = data.azurerm_resource_group.rg.location
+  resource_group_name  = data.azurerm_resource_group.rg.name
   storage_account_type = "Standard_LRS"
   create_option        = "Empty"
   disk_size_gb         = var.default_data_disk_size
