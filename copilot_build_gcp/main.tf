@@ -12,7 +12,7 @@ resource "google_compute_subnetwork" "copilot_subnet" {
 }
 
 resource "google_compute_address" "ip_address" {
-  name         = "aviatrix-copilot-address"
+  name         = var.ip_address_name
   address_type = "EXTERNAL"
 }
 
@@ -51,6 +51,8 @@ resource "google_compute_instance" "copilot" {
     ssh-keys = local.ssh_key
   }
 
+  metadata_startup_script = local.metadata_startup_script
+
   lifecycle {
     ignore_changes = [attached_disk]
   }
@@ -61,7 +63,7 @@ resource "google_compute_firewall" "copilot_firewall" {
   network       = var.use_existing_network == false ? google_compute_network.copilot_network[0].self_link : var.network
   for_each      = var.allowed_cidrs
   source_ranges = each.value["cidrs"]
-  target_tags   = var.network_tags
+  target_tags   = google_compute_instance.copilot.tags
 
   allow {
     protocol = each.value["protocol"]

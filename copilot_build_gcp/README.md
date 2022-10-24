@@ -132,3 +132,7 @@ output "copilot_private_ip" {
 - **instance_id**
 
   Instance ID.
+
+- **network**
+
+  Network self link.
