@@ -178,3 +178,27 @@ value = module.copilot_build_oci.private_ip
 - **instance_id**
 
   Instance ID.
+
+- **nsg_id**
+
+  Network security group ID.
+
+- **security_list_id**
+
+  Security list ID.
+
+- **availability_domain**
+
+  Availability domain.
+
+- **vcn_id**
+
+  VCN ID.
+
+- **route_table_id**
+
+  Route table ID.
+
+- **dhcp_options_id**
+
+  DHCP opitons ID.

@@ -113,6 +113,41 @@ variable "network_tags" {
   default     = ["copilot"]
 }
 
+variable "private_mode" {
+  type        = bool
+  description = "Flag to indicate whether the copilot is for private mode"
+  default     = false
+}
+
+variable "is_cluster" {
+  type        = bool
+  description = "Flag to indicate whether the copilot is for a cluster"
+  default     = false
+}
+
+variable "controller_public_ip" {
+  type        = string
+  description = "Controller public IP"
+  default     = "0.0.0.0"
+}
+
+variable "controller_private_ip" {
+  type        = string
+  description = "Controller private IP"
+}
+
 locals {
   ssh_key = var.ssh_user == "" ? "" : (var.use_existing_ssh_key == false ? "${var.ssh_user}:${tls_private_key.key_pair_material[0].public_key_openssh}" : (var.ssh_public_key_file_path != "" ? "${var.ssh_user}:${file(var.ssh_public_key_file_path)}" : "${var.ssh_user}:${var.ssh_public_key_file_content}"))
+  controller_ip = var.private_mode ? var.controller_private_ip : var.controller_public_ip
+  metadata_startup_script = <<EOF
+#!/bin/bash
+jq '.config.controllerIp="${local.controller_ip}" | .config.controllerPublicIp="${local.controller_ip}" | .config.isCluster=${var.is_cluster}' /etc/copilot/db.json > /etc/copilot/db.json.tmp
+mv /etc/copilot/db.json.tmp /etc/copilot/db.json
+EOF
+}
+
+variable "ip_address_name" {
+  type        = string
+  description = "IP address name"
+  default     = "aviatrix-copilot-address"
 }
