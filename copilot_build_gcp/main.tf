@@ -29,7 +29,7 @@ resource "google_compute_instance" "copilot" {
 
   boot_disk {
     initialize_params {
-      image = "aviatrix-public/avx-copilot-gcp-1-6-1-2022-01-27"
+      image = var.image
       size  = var.boot_disk_size
     }
   }
