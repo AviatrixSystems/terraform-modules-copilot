@@ -151,3 +151,9 @@ variable "ip_address_name" {
   description = "IP address name"
   default     = "aviatrix-copilot-address"
 }
+
+variable "image" {
+  type        = string
+  description = "Image name"
+  default     = "aviatrix-public/avx-copilot-gcp-1-6-1-2022-01-27"
+}
