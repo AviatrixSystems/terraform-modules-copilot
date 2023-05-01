@@ -154,7 +154,7 @@ data "http" "copilot_iam_id" {
 data "aws_availability_zones" "all" {}
 
 data "aws_ec2_instance_type_offering" "offering" {
-  for_each = toset(["us-east-1a"])
+  for_each = try(toset(data.aws_availability_zones.all.names), tomap({}))
 
   filter {
     name   = "instance-type"
