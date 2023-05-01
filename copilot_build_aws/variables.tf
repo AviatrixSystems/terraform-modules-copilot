@@ -151,6 +151,25 @@ data "http" "copilot_iam_id" {
     "Accept" = "application/json"
   }
 }
+data "aws_availability_zones" "all" {}
+
+data "aws_ec2_instance_type_offering" "offering" {
+  for_each = toset(["us-east-1a"])
+
+  filter {
+    name   = "instance-type"
+    values = ["t2.micro", "t3.micro", local.instance_type]
+  }
+
+  filter {
+    name   = "location"
+    values = [each.value]
+  }
+
+  location_type = "availability-zone"
+
+  preferred_instance_types = [local.instance_type, "t3.micro", "t2.micro"]
+}
 
 locals {
   name_prefix       = var.name_prefix != "" ? "${var.name_prefix}_" : ""
@@ -158,7 +177,7 @@ locals {
   images_copilotarm = jsondecode(data.http.copilot_iam_id.response_body).CopilotARM
   ami_id            = var.type == "Copilot" ? local.images_copilot[data.aws_region.current.name] : local.images_copilotarm[data.aws_region.current.name]
   instance_type     = var.instance_type != "" ? var.instance_type : (var.type == "Copilot" ? "m5.2xlarge" : "t4g.2xlarge")
-  default_az        = "us-east-1a"
+  default_az        = keys({ for az, details in data.aws_ec2_instance_type_offering.offering : az => details.instance_type if details.instance_type == local.instance_type })[0]
   availability_zone = var.availability_zone != "" ? var.availability_zone : local.default_az
   controller_ip     = var.private_mode ? var.controller_private_ip : var.controller_public_ip
 
