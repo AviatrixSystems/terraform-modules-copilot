@@ -155,9 +155,7 @@ data "http" "copilot_iam_id" {
 data "aws_availability_zones" "all" {}
 
 data "aws_ec2_instance_type_offering" "offering" {
-  for_each = {
-    us-east-1a = "us-east-1a"
-  }
+  for_each = toset(local.zone_names)
   
   filter {
     name   = "instance-type"
@@ -175,6 +173,7 @@ data "aws_ec2_instance_type_offering" "offering" {
 }
 
 locals {
+  zone_names                    = data.aws_availability_zones.all.names
   name_prefix       = var.name_prefix != "" ? "${var.name_prefix}_" : ""
   images_copilot    = jsondecode(data.http.copilot_iam_id.response_body).Copilot
   images_copilotarm = jsondecode(data.http.copilot_iam_id.response_body).CopilotARM
