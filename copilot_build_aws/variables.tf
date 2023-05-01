@@ -152,10 +152,12 @@ data "http" "copilot_iam_id" {
   }
 }
 
-data "aws_availability_zones" "all" {}
+data "aws_availability_zones" "all" {
+  all_availability_zones = true
+}
 
 data "aws_ec2_instance_type_offering" "offering" {
-  for_each = {for zone_name in data.aws_availability_zones.all.names: zone_name => zone_name} # toset(data.aws_availability_zones.all.names)
+  for_each = toset(data.aws_availability_zones.all.names)
   
   filter {
     name   = "instance-type"
@@ -164,16 +166,12 @@ data "aws_ec2_instance_type_offering" "offering" {
 
   filter {
     name   = "location"
-    values = [each.key]
+    values = [each.value]
   }
 
   location_type = "availability-zone"
 
   preferred_instance_types = [var.instance_type, "t3.micro", "t2.micro"]
-  
-  depends_on = [
-    data.aws_availability_zones.all
-  ]
 }
 
 locals {
