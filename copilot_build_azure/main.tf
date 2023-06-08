@@ -106,6 +106,13 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
   }
 }
 
+data "http" "image_info" {
+  url = "https://release.prod.sre.aviatrix.com/image-details/arm_copilot_image_details.json"
+  request_headers = {
+    "Accept" = "application/json"
+  }
+}
+
 resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm_ssh" {
   count                 = var.add_ssh_key ? 1 : 0
   admin_username        = var.virtual_machine_admin_username
@@ -124,16 +131,16 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm_ssh" {
   }
 
   source_image_reference {
-    offer     = "aviatrix-copilot"
-    publisher = "aviatrix-systems"
-    sku       = "avx-cplt-byol-01"
-    version   = "latest"
+    offer     = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["offer"]
+    publisher = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["publisher"]
+    sku       = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["sku"]
+    version   = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["version"]
   }
 
   plan {
-    name      = "avx-cplt-byol-01"
-    product   = "aviatrix-copilot"
-    publisher = "aviatrix-systems"
+    name      = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["sku"]
+    product   = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["offer"]
+    publisher = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["publisher"]
   }
 
   admin_ssh_key {
