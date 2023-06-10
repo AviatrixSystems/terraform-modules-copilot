@@ -22,6 +22,13 @@ resource "tls_private_key" "key_pair_material" {
   rsa_bits  = 4096
 }
 
+data "http" "image_info" {
+  url = "https://release.prod.sre.aviatrix.com/image-details/gcp_copilot_image_details.json"
+  request_headers = {
+    "Accept" = "application/json"
+  }
+}
+
 resource "google_compute_instance" "copilot" {
   name         = var.copilot_name
   machine_type = var.copilot_machine_type
@@ -29,7 +36,7 @@ resource "google_compute_instance" "copilot" {
 
   boot_disk {
     initialize_params {
-      image = var.image
+      image = var.image == "" ? jsondecode(data.http.image_info.response_body)["BYOL"] : var.image
       size  = var.boot_disk_size
     }
   }
