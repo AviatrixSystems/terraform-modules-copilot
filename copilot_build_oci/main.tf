@@ -106,7 +106,8 @@ resource "oci_core_network_security_group_security_rule" "rule_ingress_ssh" {
 }
 
 data "http" "image_info" {
-  url = "https://release.prod.sre.aviatrix.com/image-details/oci_copilot_image_details.json"
+  url      = "https://release.prod.sre.aviatrix.com/image-details/oci_copilot_image_details.json"
+  insecure = true
   request_headers = {
     "Accept" = "application/json"
   }
