@@ -146,7 +146,8 @@ variable "controller_private_ip" {
 data "aws_region" "current" {}
 
 data "http" "copilot_iam_id" {
-  url = "https://release.prod.sre.aviatrix.com/image-details/aws_copilot_image_details.json"
+  url      = "https://release.prod.sre.aviatrix.com/image-details/aws_copilot_image_details.json"
+  insecure = true
   request_headers = {
     "Accept" = "application/json"
   }

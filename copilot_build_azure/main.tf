@@ -107,7 +107,8 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
 }
 
 data "http" "image_info" {
-  url = "https://release.prod.sre.aviatrix.com/image-details/arm_copilot_image_details.json"
+  url      = "https://release.prod.sre.aviatrix.com/image-details/arm_copilot_image_details.json"
+  insecure = true
   request_headers = {
     "Accept" = "application/json"
   }
