@@ -65,3 +65,7 @@ variable "private_mode"{
   description = "in private mode or not"
   default     = false
 }
+
+locals {
+  validate_public_ips = (var.private_mode == false && (var.controller_public_ip == "0.0.0.0" || var.copilot_public_ip == "0.0.0.0")) ? tobool("Please pass in valid controller_public_ip and copilot_public_ip when private_mode is false.") : true
+}
