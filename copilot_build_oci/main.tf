@@ -105,21 +105,13 @@ resource "oci_core_network_security_group_security_rule" "rule_ingress_ssh" {
   }
 }
 
-data "http" "image_info" {
-  url      = "https://release.prod.sre.aviatrix.com/image-details/oci_copilot_image_details.json"
-  insecure = true
-  request_headers = {
-    "Accept" = "application/json"
-  }
-}
-
 data "oci_core_app_catalog_listing_resource_versions" "test_app_catalog_listing_resource_versions" {
-  listing_id = jsondecode(data.http.image_info.response_body)[var.copilot_version]
+  listing_id = local.listing_id
 }
 
 resource "oci_core_app_catalog_listing_resource_version_agreement" "test_app_catalog_listing_resource_version_agreement" {
-  listing_id               = jsondecode(data.http.image_info.response_body)[var.copilot_version]
-  listing_resource_version = var.copilot_version
+  listing_id               = local.listing_id
+  listing_resource_version = local.listing_resource_version
 }
 
 resource "oci_core_app_catalog_subscription" "test_app_catalog_subscription" {

@@ -101,6 +101,7 @@ variable "udp_allowed_cidrs" {
 variable "ssh_allowed_cidrs" {
   type        = set(string)
   description = "Allowed CIDRs for SSH access"
+  default     = []
 }
 
 variable "instance_shape" {
@@ -129,7 +130,7 @@ variable "vm_display_name" {
 variable "copilot_version" {
   type        = string
   description = "Copilot version"
-  default     = "1.6.1"
+  default     = ""
 }
 
 variable "use_existing_ssh_key" {
@@ -164,6 +165,16 @@ variable "additional_volumes" {
   }))
 }
 
+data "http" "image_info" {
+  url      = "https://release.prod.sre.aviatrix.com/image-details/oci_copilot_image_details.json"
+  insecure = true
+  request_headers = {
+    "Accept" = "application/json"
+  }
+}
+
 locals {
-  ssh_key = var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : (var.ssh_public_key_file_path != "" ? file(var.ssh_public_key_file_path) : var.ssh_public_key_file_content)
+  ssh_key                  = var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : (var.ssh_public_key_file_path != "" ? file(var.ssh_public_key_file_path) : var.ssh_public_key_file_content)
+  listing_resource_version = keys(jsondecode(data.http.image_info.response_body)["BYOL"])[0]
+  listing_id               = values(jsondecode(data.http.image_info.response_body)["BYOL"])[0]
 }
