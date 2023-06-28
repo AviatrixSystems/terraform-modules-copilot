@@ -174,14 +174,15 @@ data "aws_ec2_instance_type_offering" "offering" {
 }
 
 locals {
-  name_prefix       = var.name_prefix != "" ? "${var.name_prefix}_" : ""
-  images_copilot    = jsondecode(data.http.copilot_iam_id.response_body).Copilot
-  images_copilotarm = jsondecode(data.http.copilot_iam_id.response_body).CopilotARM
-  ami_id            = var.type == "Copilot" ? local.images_copilot[data.aws_region.current.name] : local.images_copilotarm[data.aws_region.current.name]
-  instance_type     = var.instance_type != "" ? var.instance_type : (var.type == "Copilot" ? "m5.2xlarge" : "t4g.2xlarge")
-  default_az        = keys({ for az, details in data.aws_ec2_instance_type_offering.offering : az => details.instance_type if details.instance_type == local.instance_type })[0]
-  availability_zone = var.availability_zone != "" ? var.availability_zone : local.default_az
-  controller_ip     = var.private_mode ? var.controller_private_ip : var.controller_public_ip
+  name_prefix         = var.name_prefix != "" ? "${var.name_prefix}_" : ""
+  images_copilot      = jsondecode(data.http.copilot_iam_id.response_body).Copilot
+  images_copilotarm   = jsondecode(data.http.copilot_iam_id.response_body).CopilotARM
+  ami_id              = var.type == "Copilot" ? local.images_copilot[data.aws_region.current.name] : local.images_copilotarm[data.aws_region.current.name]
+  instance_type       = var.instance_type != "" ? var.instance_type : (var.type == "Copilot" ? "m5.2xlarge" : "t4g.2xlarge")
+  default_az          = keys({ for az, details in data.aws_ec2_instance_type_offering.offering : az => details.instance_type if details.instance_type == local.instance_type })[0]
+  availability_zone   = var.availability_zone != "" ? var.availability_zone : local.default_az
+  controller_ip       = var.private_mode ? var.controller_private_ip : var.controller_public_ip
+  validate_public_ips = (var.private_mode == false && var.controller_public_ip == "0.0.0.0") ? tobool("Please pass in valid controller_public_ip when private_mode is false.") : true
 
   common_tags = merge(
     var.tags, {
