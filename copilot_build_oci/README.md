@@ -139,7 +139,7 @@ value = module.copilot_build_oci.private_ip
 
 - **copilot_version**
 
-  Copilot version. Default: "1.6.1".
+  Copilot version.
 
 > **NOTE:** If **use_existing_ssh_key** is set to false, new keys will be generated. If **use_existing_keypair** is set to true, either **ssh_public_key_file_path** or **ssh_public_key_file_content** must be configured.
 
