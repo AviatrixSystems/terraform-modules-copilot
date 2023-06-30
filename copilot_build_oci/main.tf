@@ -167,6 +167,12 @@ resource "oci_core_instance" "copilot_vm" {
   }
 }
 
+resource "time_sleep" "sleep_10min" {
+  create_duration = "600s"
+
+  depends_on = [oci_core_instance.copilot_vm]
+}
+
 resource "oci_core_volume" "default" {
   count               = var.default_data_volume_size == 0 ? 0 : 1
   compartment_id      = var.compartment_ocid

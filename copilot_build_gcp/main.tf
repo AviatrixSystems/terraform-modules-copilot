@@ -66,6 +66,12 @@ resource "google_compute_instance" "copilot" {
   }
 }
 
+resource "time_sleep" "sleep_10min" {
+  create_duration = "600s"
+
+  depends_on = [google_compute_instance.copilot]
+}
+
 resource "google_compute_firewall" "copilot_firewall" {
   name          = each.key
   network       = var.use_existing_network == false ? google_compute_network.copilot_network[0].self_link : var.network

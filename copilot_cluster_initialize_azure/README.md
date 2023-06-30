@@ -4,13 +4,12 @@
 
 This Terraform module initializes a newly created Aviatrix Copilot Cluster. This module assumes that the controller, main copilot and copilot nodes are all deployed on Azure.
 The following actions are performed:
-1. Sleep 10 min for copilot instances to get ready
-2. Modify the security groups for controller and copilot instances
-3. Try to log in controller
-4. Try to log in main copilot and cluster nodes
-5. Log in controller to get CID
-6. Initialize copilot cluster
-7. Check initialization status
+1. Modify the security groups for controller and copilot instances
+2. Try to log in controller
+3. Try to log in main copilot and cluster nodes
+4. Log in controller to get CID
+5. Initialize copilot cluster
+6. Check initialization status
 
 ### Example of Launching Copilot Instances and Initializing the Cluster
 
