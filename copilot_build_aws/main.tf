@@ -165,6 +165,12 @@ EOF
   })
 }
 
+resource "time_sleep" "sleep_10min" {
+  create_duration = "600s"
+
+  depends_on = [aws_instance.aviatrixcopilot]
+}
+
 resource "aws_ebs_volume" "default" {
   count             = var.default_data_volume_name == "" ? 0 : 1
   availability_zone = data.aws_subnet.subnet.availability_zone

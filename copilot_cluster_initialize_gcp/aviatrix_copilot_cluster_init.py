@@ -349,19 +349,10 @@ def function_handler(event):
     all_copilot_private_ips = [main_copilot_private_ip] + node_copilot_private_ips
     all_copilot_network_tags = [main_copilot_network_tag] + node_copilot_network_tags
 
-    ###########################################################
-    # Step 1: Sleep 10 min for copilot instances to get ready #
-    ###########################################################
-    logging.info("STEP 1 START: Sleep 10 min for copilot instances to get ready.")
-
-    time.sleep(600)
-
-    logging.info("STEP 1 ENDED: Slept 10 min.")
-
     ###########################################################################
-    # Step 2: Modify the security groups for controller and copilot instances #
+    # Step 1: Modify the security groups for controller and copilot instances #
     ###########################################################################
-    logging.info("STEP 2 START: Modify the security groups for controller and copilot instances.")
+    logging.info("STEP 1 START: Modify the security groups for controller and copilot instances.")
 
     # modify controller security rule
     controller_allowed_cidrs = []
@@ -419,12 +410,12 @@ def function_handler(event):
 
     # logging.info(copilot_rules)
 
-    logging.info("STEP 2 ENDED: Modified the security groups for controller and copilot instances.")
+    logging.info("STEP 1 ENDED: Modified the security groups for controller and copilot instances.")
 
     ###################################
-    # Step 3: Try to login controller #
+    # Step 2: Try to login controller #
     ###################################
-    logging.info("STEP 3 START: Login controller.")
+    logging.info("STEP 2 START: Login controller.")
 
     response = login_controller(
         controller_ip=controller_login_ip,
@@ -434,21 +425,21 @@ def function_handler(event):
 
     verify_controller_login_response(response=response)
 
-    logging.info("STEP 3 ENDED: Logged into controller.")
+    logging.info("STEP 2 ENDED: Logged into controller.")
 
     #################################################################################
-    # Step 4: Try to login main copilot and cluster nodes. Retry every 10s for 2min #
+    # Step 3: Try to login main copilot and cluster nodes. Retry every 10s for 2min #
     #################################################################################
-    logging.info("STEP 4 START: Try to login main copilot and cluster nodes. Retry every 10s for 2min.")
+    logging.info("STEP 3 START: Try to login main copilot and cluster nodes. Retry every 10s for 2min.")
 
     copilot_login_driver(controller_ip=controller_login_ip, login_info=login_info)
 
-    logging.info("STEP 4 ENDED: Logged into main copilot and cluster nodes.")
+    logging.info("STEP 3 ENDED: Logged into main copilot and cluster nodes.")
 
     #######################################
-    # Step 5: Login controller to get CID #
+    # Step 4: Login controller to get CID #
     #######################################
-    logging.info("STEP 5 START: Login controller to get CID.")
+    logging.info("STEP 4 START: Login controller to get CID.")
 
     response = login_controller(
         controller_ip=controller_login_ip,
@@ -459,12 +450,12 @@ def function_handler(event):
     verify_controller_login_response(response=response)
     CID = response.json()["CID"]
 
-    logging.info("STEP 5 ENDED: Logged into controller and got CID.")
+    logging.info("STEP 4 ENDED: Logged into controller and got CID.")
 
     ##################################################
-    # Step 6: Call API to initialize copilot cluster #
+    # Step 5: Call API to initialize copilot cluster #
     ##################################################
-    logging.info("STEP 6 START: Call API to initialize copilot cluster.")
+    logging.info("STEP 5 START: Call API to initialize copilot cluster.")
 
     response = init_copilot_cluster(
         controller_username=controller_username,
@@ -477,12 +468,12 @@ def function_handler(event):
     if response.status_code != 200:
         raise AviatrixException(message="Initialization API call failed")
 
-    logging.info("STEP 6 ENDED: Called API to initialize copilot cluster.")
+    logging.info("STEP 5 ENDED: Called API to initialize copilot cluster.")
 
     #######################################
-    # Step 7: Check initialization status #
+    # Step 6: Check initialization status #
     #######################################
-    logging.info("STEP 7 START: Check initialization status.")
+    logging.info("STEP 6 START: Check initialization status.")
 
     retry_count = 30
     sleep_between_retries = 30
@@ -514,7 +505,7 @@ def function_handler(event):
                 message="Exceed the max retry times. Initialization still not done.",
             )
 
-    logging.info("STEP 7 ENDED: Initialization status check is done.")
+    logging.info("STEP 6 ENDED: Initialization status check is done.")
 
 
 if __name__ == '__main__':
