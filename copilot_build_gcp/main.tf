@@ -23,8 +23,8 @@ resource "tls_private_key" "key_pair_material" {
 }
 
 data "http" "image_info" {
-  url      = "https://release.prod.sre.aviatrix.com/image-details/gcp_copilot_image_details.json"
-  insecure = true
+  url = "https://cdn.prod.sre.aviatrix.com/image-details/gcp_copilot_image_details.json"
+
   request_headers = {
     "Accept" = "application/json"
   }

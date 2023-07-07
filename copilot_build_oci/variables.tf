@@ -166,8 +166,8 @@ variable "additional_volumes" {
 }
 
 data "http" "image_info" {
-  url      = "https://release.prod.sre.aviatrix.com/image-details/oci_copilot_image_details.json"
-  insecure = true
+  url = "https://cdn.prod.sre.aviatrix.com/image-details/oci_copilot_image_details.json"
+
   request_headers = {
     "Accept" = "application/json"
   }
