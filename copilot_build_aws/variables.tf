@@ -144,7 +144,7 @@ variable "controller_private_ip" {
 }
 
 variable "availability_zones" {
-  type = list(string)
+  type    = list(string)
   default = ["us-east-1a"]
 }
 
