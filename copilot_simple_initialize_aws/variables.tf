@@ -60,7 +60,7 @@ variable "copilot_password" {
   description = "main copilot password"
 }
 
-variable "private_mode"{
+variable "private_mode" {
   type        = bool
   description = "in private mode or not"
   default     = false
