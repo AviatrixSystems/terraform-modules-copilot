@@ -143,6 +143,18 @@ variable "controller_private_ip" {
   description = "Controller private IP"
 }
 
+variable "root_volume_encrypted" {
+  type        = bool
+  description = "Whether the root volume is encrypted"
+  default     = true
+}
+
+variable "root_volume_kms_key_id" {
+  type        = string
+  description = "ARN for the key used to encrypt the root volume"
+  default     = ""
+}
+
 data "aws_region" "current" {}
 
 data "http" "copilot_iam_id" {
