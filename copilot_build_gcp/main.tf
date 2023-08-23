@@ -62,7 +62,7 @@ resource "google_compute_instance" "copilot" {
   metadata_startup_script = local.metadata_startup_script
 
   lifecycle {
-    ignore_changes = [attached_disk]
+    ignore_changes = [attached_disk, metadata_startup_script]
   }
 }
 
