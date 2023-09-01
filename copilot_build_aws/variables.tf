@@ -151,7 +151,7 @@ variable "availability_zones" {
 data "aws_region" "current" {}
 
 data "http" "copilot_iam_id" {
-  url = "https://aviatrix-s3-public.s3.amazonaws.com/Public/SelfService/aws_copilot_image_details.json"
+  url = "https://aviatrix-download.s3.us-west-2.amazonaws.com/AMI_ID/copilot_ami_id.json"
   request_headers = {
     "Accept" = "application/json"
   }
@@ -177,7 +177,7 @@ data "aws_ec2_instance_type_offering" "offering" {
 
 locals {
   name_prefix       = var.name_prefix != "" ? "${var.name_prefix}_" : ""
-  images_copilot    = jsondecode(data.http.copilot_iam_id.response_body).CopilotUnified
+  images_copilot    = jsondecode(data.http.copilot_iam_id.response_body).Copilot
   images_copilotarm = jsondecode(data.http.copilot_iam_id.response_body).CopilotARM
   ami_id            = var.type == "Copilot" ? local.images_copilot[data.aws_region.current.name] : local.images_copilotarm[data.aws_region.current.name]
   instance_type     = var.instance_type != "" ? var.instance_type : (var.type == "Copilot" ? "m5.2xlarge" : "t4g.2xlarge")
