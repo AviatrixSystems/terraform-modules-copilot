@@ -174,14 +174,14 @@ resource "null_resource" "wait_for_copilot" {
     command = <<EOF
 #!/bin/bash
 echo "Waiting for Copilot ..."
-until [ "$(curl -ks https://${aws_instance.aviatrixcopilot.public_ip}/api/info/updateStatus | jq -r '.status')" = "finished" ]
+until [ "$(curl -ks https://${self.triggers.copilot}/api/info/updateStatus | jq -r '.status')" = "finished" ]
 do
   sleep 10
-  echo "Waiting for Copilot ..."
 done
 echo "Copilot is online."
       EOF
   }
+  # depends_on = [aws_instance.aviatrixcopilot]
 }
 
 resource "aws_ebs_volume" "default" {
