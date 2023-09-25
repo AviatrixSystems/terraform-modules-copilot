@@ -174,7 +174,7 @@ resource "null_resource" "wait_for_copilot" {
     command = <<EOF
 #!/bin/bash
 printf "%s" "Waiting for Copilot ..."
-until curl -ks https://${aws_instance.aviatrixcopilot.public_ip}/api/info/updateStatus | jq -r '.status'
+until [ "$(curl -ks https://${aws_instance.aviatrixcopilot.public_ip}/api/info/updateStatus | jq -r '.status')" = "finished" ]
 do
   sleep 10
 done
