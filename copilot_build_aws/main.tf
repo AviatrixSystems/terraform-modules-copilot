@@ -174,9 +174,14 @@ resource "null_resource" "wait_for_copilot" {
     command = <<EOF
 #!/bin/bash
 echo "Waiting for Copilot..."
-until [ "$(curl -ks https://${self.triggers.copilot}/api/info/updateStatus | jq -r '.status')" = "finished" ]
+count=0
+until [ "$(curl -ks https://${aws_eip.copilot_eip[0]}/api/info/updateStatus | jq -r '.status')" = "finished" ]
 do
   sleep 10
+  ((count++))
+  if [[ $count -eq 60 ]]; then
+    break
+  fi
 done
 echo "Copilot is online."
       EOF
