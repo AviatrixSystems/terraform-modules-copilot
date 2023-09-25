@@ -173,7 +173,7 @@ resource "null_resource" "wait_for_copilot" {
     when    = create
     command = <<EOF
 #!/bin/bash
-echo "curl -ks https://${self.triggers.copilot.public_ip}/api/info/updateStatus"
+echo "Running: curl -ks https://${self.triggers.copilot.public_ip}/api/info/updateStatus"
 until [ "$(curl -ks https://${self.triggers.copilot.public_ip}/api/info/updateStatus | jq -r '.status')" = "finished" ]
 do
   sleep 10
