@@ -167,14 +167,14 @@ EOF
 
 resource "null_resource" "wait_for_copilot" {
   triggers = {
-    copilot = aws_instance.aviatrixcopilot
+    copilot = aws_instance.aviatrixcopilot.public_ip
   }
   provisioner "local-exec" {
     when    = create
     command = <<EOF
 #!/bin/bash
-echo "Running: curl -ks https://${self.triggers.copilot.public_ip}/api/info/updateStatus"
-until [ "$(curl -ks https://${self.triggers.copilot.public_ip}/api/info/updateStatus | jq -r '.status')" = "finished" ]
+echo "Running: curl -ks https://${self.triggers.copilot}/api/info/updateStatus"
+until [ "$(curl -ks https://${self.triggers.copilot}/api/info/updateStatus | jq -r '.status')" = "finished" ]
 do
   sleep 10
 done
