@@ -181,7 +181,7 @@ done
 echo "Copilot is online."
       EOF
   }
-  depends_on = [aws_instance.aviatrixcopilot]
+  # depends_on = [aws_instance.aviatrixcopilot]
 }
 
 resource "aws_ebs_volume" "default" {
