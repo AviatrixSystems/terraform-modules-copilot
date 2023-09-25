@@ -173,7 +173,6 @@ resource "null_resource" "wait_for_copilot" {
     when    = create
     command = <<EOF
 #!/bin/bash
-#!/bin/bash
 printf "%s" "Waiting for Copilot ..."
 until [ "$(curl -ks https://${aws_instance.aviatrixcopilot.public_ip}/api/info/updateStatus | jq -r '.status')" = "finished" ]
 do
