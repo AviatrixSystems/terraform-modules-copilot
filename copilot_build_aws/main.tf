@@ -144,7 +144,7 @@ resource "aws_instance" "aviatrixcopilot" {
   instance_type     = local.instance_type
   key_name          = var.keypair
   availability_zone = data.aws_subnet.subnet.availability_zone
-  user_data = <<EOF
+  user_data         = <<EOF
 #!/bin/bash
 jq '.config.controllerIp="${local.controller_ip}" | .config.controllerPublicIp="${local.controller_ip}" | .config.isCluster=${var.is_cluster}' /etc/copilot/db.json > /etc/copilot/db.json.tmp
 mv /etc/copilot/db.json.tmp /etc/copilot/db.json
@@ -165,10 +165,22 @@ EOF
   })
 }
 
-resource "time_sleep" "sleep_10min" {
-  create_duration = "600s"
-
-  depends_on = [aws_instance.aviatrixcopilot]
+resource "null_resource" "wait_for_copilot" {
+  triggers = {
+    copilot = aws_instance.aviatrixcopilot.public_ip
+  }
+  provisioner "local-exec" {
+    when    = create
+    command = <<EOF
+#!/bin/bash
+printf "%s" "Waiting for Copilot ..."
+until curl -ks https://${aws_instance.aviatrixcopilot.public_ip}/api/info/updateStatus | jq -r '.status'
+do
+  sleep 10
+done
+printf "%s" "Copilot is online."
+      EOF
+  }
 }
 
 resource "aws_ebs_volume" "default" {
