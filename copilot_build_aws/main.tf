@@ -176,6 +176,7 @@ resource "null_resource" "wait_for_copilot" {
 printf "%s" "Waiting for Copilot ..."
 until [ "$(curl -ks https://${aws_instance.aviatrixcopilot.public_ip}/api/info/updateStatus | jq -r '.status')" = "finished" ]
 do
+  printf "%s" "Waiting for Copilot ..."
   sleep 10
 done
 printf "%s" "Copilot is online."
