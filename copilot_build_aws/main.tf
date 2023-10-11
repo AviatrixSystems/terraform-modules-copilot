@@ -178,8 +178,8 @@ count=0
 until [ "$(curl -ks https://${try(aws_eip.copilot_eip[0].public_ip, "")}/api/info/updateStatus | jq -r '.status')" = "finished" ]
 do
   sleep 10
-  ((count++))
-  if [[ $count -eq 60 ]]; then
+  count=$((count+1))
+  if [ $count -eq 60 ]; then
     break
   fi
 done
