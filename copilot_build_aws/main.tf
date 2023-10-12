@@ -172,7 +172,6 @@ resource "null_resource" "wait_for_copilot" {
   provisioner "local-exec" {
     when    = create
     command = <<EOF
-#!/bin/bash
 echo "Waiting for Copilot..."
 count=0
 until [ "$(curl -ks https://${try(aws_eip.copilot_eip[0].public_ip, "")}/api/info/updateStatus | jq -r '.status')" = "finished" ]
