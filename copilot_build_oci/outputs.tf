@@ -36,7 +36,7 @@ output "dhcp_options_id" {
 
 data "oci_core_route_tables" "route_table" {
   compartment_id = var.compartment_ocid
-  display_name = var.routetable_display_name
+  display_name   = var.routetable_display_name
 }
 
 output "route_table_id" {

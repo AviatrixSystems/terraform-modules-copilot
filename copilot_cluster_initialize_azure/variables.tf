@@ -141,7 +141,7 @@ variable "node_copilot_security_rule_priorities" {
   description = "list of node copilot security rule priorities"
 }
 
-variable "private_mode"{
+variable "private_mode" {
   type        = bool
   description = "in private mode or not"
   default     = false

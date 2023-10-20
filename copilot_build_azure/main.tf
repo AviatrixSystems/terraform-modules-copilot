@@ -91,7 +91,7 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
   network_interface_ids           = [azurerm_network_interface.aviatrix_copilot_nic.id]
   resource_group_name             = var.use_existing_vnet == false ? azurerm_resource_group.aviatrix_copilot_rg[0].name : var.resource_group_name
   size                            = var.virtual_machine_size
-  custom_data = base64encode(local.custom_data)
+  custom_data                     = base64encode(local.custom_data)
 
   os_disk {
     name                 = var.os_disk_name
