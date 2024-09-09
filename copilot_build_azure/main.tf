@@ -81,6 +81,13 @@ data "http" "image_info" {
   }
 }
 
+resource "azurerm_marketplace_agreement" "aviatrix_mp_agreement" {
+  count     = var.use_existing_mp_agreement ? 0 : 1
+  offer     = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["offer"]
+  publisher = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["publisher"]
+  plan      = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["sku"]
+}
+
 resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
   count                           = var.add_ssh_key ? 0 : 1
   admin_username                  = var.virtual_machine_admin_username
@@ -112,11 +119,13 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm" {
     product   = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["offer"]
     publisher = jsondecode(data.http.image_info.response_body)["BYOL"]["Azure ARM"]["publisher"]
   }
+
+  depends_on = [azurerm_marketplace_agreement.aviatrix_mp_agreement]
 }
 
-resource "time_sleep" "sleep_10min" {
+resource "time_sleep" "wait_for_startup" {
   count           = var.add_ssh_key ? 0 : 1
-  create_duration = "600s"
+  create_duration = var.wait_for_startup_duration
 
   depends_on = [azurerm_linux_virtual_machine.aviatrix_copilot_vm]
 }
@@ -155,11 +164,13 @@ resource "azurerm_linux_virtual_machine" "aviatrix_copilot_vm_ssh" {
     username   = var.virtual_machine_admin_username
     public_key = local.ssh_key
   }
+
+  depends_on = [azurerm_marketplace_agreement.aviatrix_mp_agreement]
 }
 
-resource "time_sleep" "sleep_10min_ssh" {
+resource "time_sleep" "wait_for_startup_ssh" {
   count           = var.add_ssh_key ? 1 : 0
-  create_duration = "600s"
+  create_duration = var.wait_for_startup_duration
 
   depends_on = [azurerm_linux_virtual_machine.aviatrix_copilot_vm_ssh]
 }

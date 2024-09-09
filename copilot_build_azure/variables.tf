@@ -149,6 +149,18 @@ variable "controller_private_ip" {
   description = "Controller private IP"
 }
 
+variable "use_existing_mp_agreement" {
+  type        = bool
+  description = "Flag to indicate whether to use an existing marketplace agreement"
+  default     = false
+}
+
+variable "wait_for_startup_duration" {
+  type        = string
+  description = "Duration to wait for the copilot to start up"
+  default     = "600s"
+}
+
 locals {
   ssh_key             = var.add_ssh_key ? (var.use_existing_ssh_key == false ? tls_private_key.key_pair_material[0].public_key_openssh : (var.ssh_public_key_file_path != "" ? file(var.ssh_public_key_file_path) : var.ssh_public_key_file_content)) : ""
   controller_ip       = var.private_mode ? var.controller_private_ip : var.controller_public_ip
