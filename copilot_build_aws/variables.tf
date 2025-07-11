@@ -132,6 +132,12 @@ variable "is_cluster" {
   default     = false
 }
 
+variable "open_ant_topo_service_ports" {
+  description = "Flag to enable TCP ports 50441-50443 for ANT Topology Service access to CoPilot."
+  type        = bool
+  default     = false
+}
+
 variable "controller_public_ip" {
   type        = string
   description = "Controller public IP"

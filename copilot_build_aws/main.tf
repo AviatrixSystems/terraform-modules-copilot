@@ -83,6 +83,40 @@ resource "aws_security_group" "AviatrixCopilotSecurityGroup" {
       self             = null
     }
   }
+  # Controller-specific port rules that apply only when enabled
+  dynamic "ingress" {
+    for_each = var.open_ant_topo_service_ports && var.controller_public_ip != null ? [1] : []
+    content {
+      from_port   = 50441
+      to_port     = 50441
+      protocol    = "tcp"
+      cidr_blocks = ["${local.controller_ip}/32"]
+      description = "TCP 50441 for Aviatrix ANT Topology Service"
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = var.open_ant_topo_service_ports && var.controller_public_ip != null ? [1] : []
+    content {
+      from_port   = 50442
+      to_port     = 50442
+      protocol    = "tcp"
+      cidr_blocks = ["${local.controller_ip}/32"]
+      description = "TCP 50442 for Aviatrix ANT Topology Service"
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = var.open_ant_topo_service_ports && var.controller_public_ip != null ? [1] : []
+    content {
+      from_port   = 50443
+      to_port     = 50443
+      protocol    = "tcp"
+      cidr_blocks = ["${local.controller_ip}/32"]
+      description = "TCP 50443 for Aviatrix ANT Topology Service"
+    }
+  }
+
   egress = [
     {
       description      = "All out traffic allowed"
