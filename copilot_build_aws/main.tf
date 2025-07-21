@@ -83,37 +83,16 @@ resource "aws_security_group" "AviatrixCopilotSecurityGroup" {
       self             = null
     }
   }
-  # Controller-specific port rules that apply only when enabled
-  dynamic "ingress" {
-    for_each = var.open_ant_topo_service_ports && var.controller_public_ip != null ? [1] : []
-    content {
-      from_port   = 50441
-      to_port     = 50441
-      protocol    = "tcp"
-      cidr_blocks = ["${local.controller_ip}/32"]
-      description = "TCP 50441 for Aviatrix ANT Topology Service"
-    }
-  }
 
+  # Apply Controller-specific ANT ingress port rules
   dynamic "ingress" {
-    for_each = var.open_ant_topo_service_ports && var.controller_public_ip != null ? [1] : []
+    for_each = local.validate_public_ips ? local.ant_service_ports : []
     content {
-      from_port   = 50442
-      to_port     = 50442
+      from_port   = ingress.value
+      to_port     = ingress.value
       protocol    = "tcp"
-      cidr_blocks = ["${local.controller_ip}/32"]
-      description = "TCP 50442 for Aviatrix ANT Topology Service"
-    }
-  }
-
-  dynamic "ingress" {
-    for_each = var.open_ant_topo_service_ports && var.controller_public_ip != null ? [1] : []
-    content {
-      from_port   = 50443
-      to_port     = 50443
-      protocol    = "tcp"
-      cidr_blocks = ["${local.controller_ip}/32"]
-      description = "TCP 50443 for Aviatrix ANT Topology Service"
+      cidr_blocks = var.private_mode == false ? ["${var.controller_public_ip}/32", "${var.controller_private_ip}/32"] : ["${var.controller_private_ip}/32"]
+      description = "Enable TCP ${ingress.value} for Aviatrix ANT Topology Service"
     }
   }
 
