@@ -153,6 +153,10 @@ output "copilot_public_ip" {
 
 > **NOTE:** A valid **controller_public_ip** is required when **private_mode** is false.
 
+- **open_ant_topo_service_ports**
+
+  Flag to enable TCP ports 50441-50443 for ANT Topology Service access to CoPilot. Defalt: false.
+
 - **controller_private_ip**
 
   Controller private IP.

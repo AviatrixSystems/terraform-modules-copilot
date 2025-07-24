@@ -83,6 +83,19 @@ resource "aws_security_group" "AviatrixCopilotSecurityGroup" {
       self             = null
     }
   }
+
+  # Apply Controller-specific ANT ingress port rules
+  dynamic "ingress" {
+    for_each = local.validate_public_ips ? local.ant_service_ports : []
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = var.private_mode == false ? ["${var.controller_public_ip}/32", "${var.controller_private_ip}/32"] : ["${var.controller_private_ip}/32"]
+      description = "Enable TCP ${ingress.value} for Aviatrix ANT Topology Service"
+    }
+  }
+
   egress = [
     {
       description      = "All out traffic allowed"

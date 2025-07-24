@@ -132,6 +132,12 @@ variable "is_cluster" {
   default     = false
 }
 
+variable "open_ant_topo_service_ports" {
+  description = "Flag to enable TCP ports 50441-50443 for ANT Topology Service access to CoPilot."
+  type        = bool
+  default     = false
+}
+
 variable "controller_public_ip" {
   type        = string
   description = "Controller public IP"
@@ -183,6 +189,7 @@ locals {
   availability_zone   = var.availability_zone != "" ? var.availability_zone : local.default_az
   controller_ip       = var.private_mode ? var.controller_private_ip : var.controller_public_ip
   validate_public_ips = (var.private_mode == false && var.controller_public_ip == "0.0.0.0") ? tobool("Please pass in valid controller_public_ip when private_mode is false.") : true
+  ant_service_ports   = var.open_ant_topo_service_ports ? [50441, 50442, 50443] : []
 
   common_tags = merge(
     var.tags, {
