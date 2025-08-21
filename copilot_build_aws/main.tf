@@ -205,6 +205,8 @@ resource "aws_ebs_volume" "default" {
   count             = var.default_data_volume_name == "" ? 0 : 1
   availability_zone = data.aws_subnet.subnet.availability_zone
   size              = var.default_data_volume_size
+  encrypted         = var.root_volume_encrypted
+  kms_key_id        = var.root_volume_kms_key_id
   tags = {
     Name = "${local.name_prefix}copilot_default_data_volume"
   }
