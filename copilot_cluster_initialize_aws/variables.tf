@@ -111,7 +111,7 @@ variable "node_copilot_sg_names" {
   description = "list of node copilot security group names"
 }
 
-variable "private_mode"{
+variable "private_mode" {
   type        = bool
   description = "in private mode or not"
   default     = false

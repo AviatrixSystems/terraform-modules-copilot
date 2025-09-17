@@ -22,8 +22,8 @@ resource "null_resource" "run_script" {
   }
 
   provisioner "local-exec" {
-    when = destroy
-    command = "python3 -W ignore ${path.module}/clean_controller_sg.py ${self.triggers.argument_destroy}"
+    when       = destroy
+    command    = "python3 -W ignore ${path.module}/clean_controller_sg.py ${self.triggers.argument_destroy}"
     on_failure = continue
   }
 }
